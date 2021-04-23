@@ -22,6 +22,7 @@ Ch = conv2(u,u',binaryMatrix);
 %   normalize to 1 byte
 normalize = 255/max(max(Ch));
 safe_matrix = round(Ch*normalize);
+save('safe_matrix.mat', 'safe_matrix');
 
 % view
 mesh(flip(safe_matrix));
