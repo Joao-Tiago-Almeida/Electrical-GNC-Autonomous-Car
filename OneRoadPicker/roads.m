@@ -11,8 +11,18 @@ width = size(map, 2);
 roadPos = drawOneRoad();
 
 m_size = size(map);
-binaryMatrix = zeros(m_size(1), m_size(2));
 
+%% viegas isto é muito mais rapido!
+tic
+[X,Y] = meshgrid(1:width,1:height);
+binaryMatrix = inpolygon(X, Y, roadPos(:,1)', roadPos(:,2)' );
+figure()
+imshow(binaryMatrix)
+toc
+
+save('../src/binaryMatrix.mat', 'binaryMatrix');
+%%
+tic
 %Draw the polygon in map image and generate binary matrix with one's in
 %polygon
 for i=1:size(map, 1)
@@ -28,6 +38,7 @@ end
 
 figure;
 imshow(map)
+toc
 disp("");
 
 %% Drawing the road
