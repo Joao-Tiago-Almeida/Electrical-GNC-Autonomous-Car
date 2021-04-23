@@ -8,13 +8,11 @@ imshow(map)
 height = size(map, 1);
 width = size(map, 2);
 
-roadPos = drawOneRoad();
+roadPos = drawOneRoad()
 
 m_size = size(map);
 binaryMatrix = zeros(m_size(1), m_size(2));
 
-%Draw the polygon in map image and generate binary matrix with one's in
-%polygon
 for i=1:size(map, 1)
     for j=1:size(map, 2)
             if inpolygon(i, j, roadPos(:,1)', roadPos(:,2)' ) == 1
@@ -29,18 +27,38 @@ end
 figure;
 imshow(map)
 disp("");
-
 %% Drawing the road
 function roadMarkers = drawOneRoad()
+    road_width = -1;
+    number_of_ways = -1;
+
     disp("Draw in the map one road (Start by picking 1 starting point and the ending point of the road: )");
-    h = drawpolygon('Color','blue');
+    while 1
+        h = drawpolygon('Color','blue');
         
-%         if ( strcmp(input("\nIf you're done drawing this road enter 'Y', if not press 'N': ", 's'), 'Y') == 1 )
-%             break;
+%         while 1
+%             road_width = str2double(input("\nEnter the road width in [m]: ", 's'));
+%             if(road_width > 0 && not(isnan(road_width)))
+%                 break;
+%             end
+%         end
+        
+%          while 1
+%             number_of_ways = str2double(input("\nEnter the number of ways the road has [1 or 2 ways]: ", 's'));
+%             if(number_of_ways > 0 && number_of_ways < 3  && not(isnan(number_of_ways)))
+%                 break;
+%             end
 %         end
 
+        %Because Matlab doesn't have a do...while I have to do this
+        if ( strcmp(input("\nIf you're done drawing this road enter 'Y', if not press 'N': ", 's'), 'Y') == 1 )
+            break;
+        end
+    end
+
     % Change road color the mark it's done and retrieve pointer positions that
-    % mark that road
+    % mark that roda
     h.Color = 'green';
     roadMarkers = h.Position;
 end
+
