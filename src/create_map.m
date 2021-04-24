@@ -23,5 +23,4 @@ MAP.WindowStyle = 'docked';
 % MAP.Position(3:4) = [len len];
 hold on;
 %% set MAP scale
-[MAP] = scale_map(size(I,1));
-
+[MAP_info] = scale_map(size(I,1));
