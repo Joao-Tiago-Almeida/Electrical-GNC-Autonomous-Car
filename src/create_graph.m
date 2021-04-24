@@ -1,0 +1,58 @@
+function create_graph(polyin, binaryMatrix)
+
+if nargin < 1
+    load('polyin.mat', 'h');
+    load('binaryMatrix.mat', 'binaryMatrix');
+end
+
+Polygon = polyshape(h.Position(:,1), h.Position(:,2));
+T = triangulation(Polygon);
+
+T_new = subdivide_triangles(T, 5)
+
+[IC,r] = incenter(T_new);
+
+figure; hold on;
+triplot(T_new);
+plot(IC(:,1), IC(:,2), 'r*');
+viscircles(IC, r);
+axis equal
+% axis tight
+% axis manual
+end
+
+function T_new = subdivide_triangles(T, N)
+
+for j = 1:N
+    subPoints =[];
+    subConnectivityList =[];
+    for i=1:length(T.ConnectivityList)
+
+        triangle_points = T.Points(T.ConnectivityList(i,:), :);
+        sub_Triangle = triangulation(polyshape(triangle_points(:,1), triangle_points(:,2)));
+
+        sub_center = incenter(sub_Triangle);
+
+        sub_triangle_1 = @(X0) polyarea( [triangle_points([1,2], 1); X0(1)],  [triangle_points([1,2], 2); X0(2)]);
+        sub_triangle_2 = @(X0) polyarea( [triangle_points([1,3], 1); X0(1)],  [triangle_points([1,3], 2); X0(2)]);
+        sub_triangle_3 = @(X0) polyarea( [triangle_points([2,3], 1); X0(1)],  [triangle_points([2,3], 2); X0(2)]);
+        minimize_3_areas = @(X0) 1e10*(~inpolygon(X0(1), X0(2), triangle_points(:,1), triangle_points(:,2))) + (sub_triangle_1(X0)-sub_triangle_2(X0))^2 + (sub_triangle_1(X0)-sub_triangle_3(X0))^2 + (sub_triangle_2(X0)-sub_triangle_3(X0))^2;
+
+        aux2 = fminsearch(minimize_3_areas, sub_center);
+        
+        if (inpolygon(aux2(1), aux2(2), triangle_points(:,1), triangle_points(:,2)) == 0)
+            aux2 = sub_center;
+        end
+       
+
+        new_triangle_points = delaunayTriangulation([triangle_points(:,1);aux2(1)], [triangle_points(:,2);aux2(2)]);
+
+        subPoints = [subPoints; new_triangle_points.Points];
+        subConnectivityList = [subConnectivityList; new_triangle_points.ConnectivityList+4*(i-1)];
+    end
+
+    T_new = triangulation(subConnectivityList, subPoints);
+    T=T_new;
+end
+
+end

@@ -1,4 +1,4 @@
-function [meters_from_MAP, fget_Lat_from_MAP, fget_Lon_from_MAP] = scale_map(vert_dim)
+function [MAP] = scale_map(vert_dim)
 clc
 %% get the coordinates
 
@@ -25,7 +25,7 @@ while(point_not_valid)
 end
 
 x1 = h1.Position-0.5;
-plot(x1(1), x1(2), '+g', 'MarkerSize', 50, 'LineWidth', 15);
+plot(x1(1), x1(2), '+g', 'MarkerSize', 30, 'LineWidth', 3);
 
 point_not_valid = true;
 disp("Draw the second location point, and type the coordinates.");
@@ -43,7 +43,7 @@ while(point_not_valid)
 end
 
 x2 = h2.Position-0.5;
-plot(x2(1), x2(2), '+g', 'MarkerSize', 50, 'LineWidth', 15);
+plot(x2(1), x2(2), 'xg', 'MarkerSize', 30, 'LineWidth', 3);
 
 x1(2) = vert_dim-x1(2);
 x2(2) = vert_dim-x2(2);
@@ -65,9 +65,11 @@ dist_geo=radius*c;    %Haversine distance
 dist_MAP = vecnorm(x1-x2);
 
 % return values - approx planar zone
-meters_from_MAP = dist_geo/dist_MAP;    % relation between 
-fget_Lat_from_MAP = @(x) (deltaLat/(x2(2)- x1(2))*x + 0.5*(lat1+lat2-(x2(2)+x1(2))*deltaLat/(x2(2)- x1(2))) )*180/pi;   % computes the latitute from the y coordinate
-fget_Lon_from_MAP = @(x) (deltaLon/(x2(1)- x1(1))*x + 0.5*(lon1+lon2-(x2(1)+x1(1))*deltaLon/(x2(1)- x1(1))) )*180/pi;   % computes the longitude from the x coordinate
+MAP.meters_from_MAP = dist_geo/dist_MAP;    % relation between 
+MAP.fget_Lat_from_MAP = @(x) (deltaLat/(x2(2)- x1(2))*x + 0.5*(lat1+lat2-(x2(2)+x1(2))*deltaLat/(x2(2)- x1(2))) )*180/pi;   % computes the latitute from the y coordinate
+MAP.fget_Lon_from_MAP = @(x) (deltaLon/(x2(1)- x1(1))*x + 0.5*(lon1+lon2-(x2(1)+x1(1))*deltaLon/(x2(1)- x1(1))) )*180/pi;   % computes the longitude from the x coordinate
+
+save('mapInformation.mat','-struct','MAP');
 
 end
 

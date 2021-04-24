@@ -27,12 +27,12 @@ tic
 %polygon
 for i=1:size(map, 1)
     for j=1:size(map, 2)
-            if inpolygon(i, j, roadPos(:,1)', roadPos(:,2)' ) == 1
-                binaryMatrix(i, j) = 1;
-                map( linspace(j, j, 5), linspace(i, i, 5), 1) = 100;
-                map( linspace(j, j, 5), linspace(i, i, 5), 2) = 100;
-                map( linspace(j, j, 5), linspace(i, i, 5), 3) = 100;
-            end
+        if inpolygon(i, j, roadPos(:,1)', roadPos(:,2)' ) == 1
+            binaryMatrix(i, j) = 1;
+            map( linspace(j, j, 5), linspace(i, i, 5), 1) = 100;
+            map( linspace(j, j, 5), linspace(i, i, 5), 2) = 100;
+            map( linspace(j, j, 5), linspace(i, i, 5), 3) = 100;
+        end
     end
 end
 
@@ -45,6 +45,7 @@ disp("");
 function roadMarkers = drawOneRoad()
     disp("Draw in the map one road (Start by picking 1 starting point and the ending point of the road: )");
     h = drawpolygon('Color','blue');
+    save('../src/polyin.mat', 'h');
         
 %         if ( strcmp(input("\nIf you're done drawing this road enter 'Y', if not press 'N': ", 's'), 'Y') == 1 )
 %             break;
