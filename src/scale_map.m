@@ -3,21 +3,25 @@ clc
 %% get the coordinates
 
 % Right green lamp in the star exit of the roundabout
-lat1 =  38.736798
-lon1 = -9.139866
+%lat1 =  38.736798
+%lon1 = -9.139866
 
 % Center of the futsal camp
-lat2 =  38.736258
-lon2 = -9.137637
+%lat2 =  38.736258
+%lon2 = -9.137637
 
 point_not_valid = true;
 disp("Draw the first location point, and type the coordinates.");
 while(point_not_valid)
-    h1 = drawcrosshair('LineWidth',1, 'Color','k');
-%     lat1 = input("Latitude: ")
-%     long1 = input("Longitude: ")
+    try
+        h1 = drawcrosshair('LineWidth',1, 'Color','k');
+    catch
+        h1 = drawpoint('LineWidth',1, 'Color','k');
+    end
+lat1 = input("Latitude: ");
+lon1 = input("Longitude: ");
     
-    valid = input("If you want to draw it again, type 'draw'. ", 's');
+    valid = input("If you want to draw it again, type 'draw'. If not press any other key. ", 's');
     if(strcmp(valid, "draw")==0)
         point_not_valid = false;
     end
@@ -25,17 +29,21 @@ while(point_not_valid)
 end
 
 x1 = h1.Position-0.5;
-plot(x1(1), x1(2), '+g', 'MarkerSize', 30, 'LineWidth', 3);
+%plot(x1(1), x1(2), '+g', 'MarkerSize', 30, 'LineWidth', 3);
 
 point_not_valid = true;
 disp("Draw the second location point, and type the coordinates.");
 while(point_not_valid)
-    h2 = drawcrosshair('LineWidth',1, 'Color','k');
+    try
+        h2 = drawcrosshair('LineWidth',1, 'Color','k');
+    catch
+        h2 = drawpoint('LineWidth',1, 'Color','k');
+    end
 
-%     lat2 = input("Latitude: ")
-%     long2 = input("Longitude: ")
+lat2 = input("Latitude: ");
+lon2 = input("Longitude: ");
     
-    valid = input("If you want to draw it again, type 'draw'. ", 's');
+    valid = input("If you want to draw it again, type 'draw'. If not press any other key. ", 's');
     if(strcmp(valid, "draw")==0)
         point_not_valid = false;
     end
@@ -43,7 +51,7 @@ while(point_not_valid)
 end
 
 x2 = h2.Position-0.5;
-plot(x2(1), x2(2), 'xg', 'MarkerSize', 30, 'LineWidth', 3);
+%plot(x2(1), x2(2), 'xg', 'MarkerSize', 30, 'LineWidth', 3);
 
 x1(2) = vert_dim-x1(2);
 x2(2) = vert_dim-x2(2);

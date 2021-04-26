@@ -8,7 +8,7 @@ if nargin < 1
 end
 
 %Get occupancy values
-binaryMatrix(binaryMatrix > 0) = 1;
+occupancy_matrix = logical(binaryMatrix);
 
 %   ideal distance to preserve from obstacles
 safe_pixels = safe_distance/meters_from_MAP;
