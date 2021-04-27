@@ -1,7 +1,7 @@
 function safe_matrix = draw_safe_matrix(binaryMatrix, meters_from_MAP, safe_distance, forbidden_zone)
 
-if nargin < 1
-    load('binaryMatrix.mat', 'binaryMatrix');
+if nargin < 2
+    load('../binaryMatrix.mat', 'binaryMatrix');
     meters_from_MAP = 0.1762;   % meters/pixel
     safe_distance = 1.5;    % meters
     forbidden_zone = 0.64;  % meters

@@ -1,22 +1,27 @@
-function create_graph(polyin, binaryMatrix)
+function create_graph(Polygon)
 
 if nargin < 1
     load('polyin.mat', 'h');
-    load('binaryMatrix.mat', 'binaryMatrix');
 end
 
-Polygon = polyshape(h.Position(:,1), h.Position(:,2));
 T = triangulation(Polygon);
 
-T_new = subdivide_triangles(T, 5)
-
-[IC,r] = incenter(T_new);
+%T_new = subdivide_triangles(T, 1)
 
 figure; hold on;
-triplot(T_new);
-plot(IC(:,1), IC(:,2), 'r*');
-viscircles(IC, r);
+triplot(T);
+%plot(IC(:,1), IC(:,2), 'r*');
+%viscircles(IC, r);
 axis equal
+for i=1:length(T.ConnectivityList(:,1))
+    
+    x = (T.Points(T.ConnectivityList(i,1), 1) + T.Points(T.ConnectivityList(i,2), 1) + T.Points(T.ConnectivityList(i,3), 1))/3;
+    y = (T.Points(T.ConnectivityList(i,1), 2) + T.Points(T.ConnectivityList(i,2), 2) + T.Points(T.ConnectivityList(i,3), 2))/3;
+    plot(x, y, 'r*');
+end
+[IC,r] = incenter(T);
+
+
 % axis tight
 % axis manual
 end
