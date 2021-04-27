@@ -15,16 +15,18 @@ phi = 0;
 w_phi = 0.01;
 dx = cos(theta)*0.002;
 dy = sin(theta)*0.002;
-figure
+figure(1); clf
 plot([x,x+dx],[y,y+dy],'b');
 hold on;
 plot(x,y,'O');
 start(my_timer);
-while t < 50
+while true
     if start_v == 1
         x_old = x;
         y_old = y;
         [x,y,theta,phi] = robot_simulation(x, y, theta, v, phi, w_phi);
+        plot(x,y,'O--');
+        pause(0.01)
         t = t + 1;
         start_v = 0;
     end
