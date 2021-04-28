@@ -1,3 +1,7 @@
+clear;
+close all;
+clc;
+%%
 disp('WELCOME TO THE GRAPHICAL GUIDANCE USER INTERFACE')
 ans = input('Do you want to change the default configurations? y/n\n', 's');
 if(strcmp(ans, 'y'))
@@ -60,9 +64,8 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info)
         pol = addboundary(pol, B{holes_index(i)});
     end
     figure();
-    plot(pol.Vertices(:, 2), pol.Vertices(:, 1))
-    figure();
-    create_graph(pol);
+    plot(pol.Vertices(:, 2), pol.Vertices(:, 1));
+    [connectivityMatrix, nodesPosition] = create_graph(pol);
 end
 
 

@@ -1,4 +1,4 @@
-function create_graph(Polygon)
+function [connectivityMatrix, nodesPosition] = create_graph(Polygon)
 
 if nargin < 1
     load('polyin.mat', 'h');
@@ -10,20 +10,40 @@ T = triangulation(Polygon);
 
 figure; hold on;
 triplot(T);
+[connectivityMatrix, nodesPosition] = build_connectivity_matrix(T);
 %plot(IC(:,1), IC(:,2), 'r*');
 %viscircles(IC, r);
 axis equal
-for i=1:length(T.ConnectivityList(:,1))
-    
-    x = (T.Points(T.ConnectivityList(i,1), 1) + T.Points(T.ConnectivityList(i,2), 1) + T.Points(T.ConnectivityList(i,3), 1))/3;
-    y = (T.Points(T.ConnectivityList(i,1), 2) + T.Points(T.ConnectivityList(i,2), 2) + T.Points(T.ConnectivityList(i,3), 2))/3;
-    plot(x, y, 'r*');
-end
+
 [IC,r] = incenter(T);
 
 
 % axis tight
 % axis manual
+end
+function [connectivityMatrix, nodesPosition] = build_connectivity_matrix(T)
+    connectivityMatrix = zeros(length(T.ConnectivityList(:,1)));
+    nodesPosition = zeros(length(T.ConnectivityList(:,1)), 2);
+    %Compute the nodes positions
+    for i=1:length(T.ConnectivityList(:,1))
+        nodesPosition (i, 1) = (T.Points(T.ConnectivityList(i,1), 1) + T.Points(T.ConnectivityList(i,2), 1) + T.Points(T.ConnectivityList(i,3), 1))/3;
+        nodesPosition (i, 2) = (T.Points(T.ConnectivityList(i,1), 2) + T.Points(T.ConnectivityList(i,2), 2) + T.Points(T.ConnectivityList(i,3), 2))/3;  
+        plot(nodesPosition(i, 1), nodesPosition(i,2), 'ro');
+    end
+    %DESCULPA ALMEIDA
+    tic
+    %[X, Y] = meshgrid(length(T.ConnectivityList(:,1)), length(T.ConnectivityList(:,1)));
+    for i = 1:length(T.ConnectivityList(:,1))
+        for j = (i+1):length(T.ConnectivityList(:,1))
+            if(sum(ismember(T.ConnectivityList(i, :),T.ConnectivityList(j, :))) == 2)
+                connectivityMatrix(i, j) = 1;
+                connectivityMatrix(j, i) = 1;
+                %plot connectivity lines
+                plot([nodesPosition(i, 1), nodesPosition(j, 1)], [nodesPosition(i, 2), nodesPosition(j, 2)], 'k');
+            end
+        end
+    end
+    toc
 end
 
 function T_new = subdivide_triangles(T, N)
