@@ -1,13 +1,21 @@
-function create_graph(Polygon, binnary_matrix)
+P= [0.7267    0.5135
+0.7292    0.5808
+0.4499    0.5958
+0.4699    0.7654
+0.4450    0.7654
+0.4624    0.9923
+0.4873    0.9898
+0.4973    1.1618
+0.7766    1.1394
+0.7816    1.2067
+0.3851    1.2441
+0.3577    0.5310]*1000;
 
-polygon.x = Polygon.Vertices(:,1)';      %   Polygon x-coordinates
-polygon.y = Polygon.Vertices(:,2)';      %   Polygon y-coordinates
-
-NX = 100;
-NY = 100;
-
-PXY = DIVIDEXY(polygon,NX,NY);
-
+polygon.x=P(:,1)';    %Polygon x-coordinates
+polygon.y=P(:,2)';  %Polygon y-coordinates
+NX=40;                     %Number of divisions in x direction
+NY=40;                     %Number of divisions in y direction
+PXY=DIVIDEXY(polygon,NX,NY); %Divide Polygon to smaller polygons set by grid
 subplot(1,2,1);   %Plot original Polygon
 for i=0:1:NX
     plot([i/NX*(max(polygon.x)-min(polygon.x))+min(polygon.x) i/NX*(max(polygon.x)-min(polygon.x))+min(polygon.x)],[min(polygon.y) max(polygon.y)],'g');
@@ -17,13 +25,13 @@ for i=0:1:NY
     plot([min(polygon.x) max(polygon.x)],[i/NY*(max(polygon.y)-min(polygon.y))+min(polygon.y) i/NY*(max(polygon.y)-min(polygon.y))+min(polygon.y)],'g');
     hold on
 end
-plot([polygon.x ],[polygon.y ],'b*-');
+plot([polygon.x polygon.x(1)],[polygon.y polygon.y(1)],'b*-');
 hold off
 daspect([1 1 1]);
 subplot(1,2,2);   %Plot smaller polygons set by grid
 for i=1:1:NX
 for j=1:1:NY
-    if not(isempty(PXY{i,j})) && sum(diag(binnary_matrix(round(PXY{i,j}.x), round(PXY{i,j}.y)))) ==  length(PXY{i,j}.x)
+    if not(isempty(PXY{i,j}))
     plot([PXY{i,j}.x PXY{i,j}.x(1)],[PXY{i,j}.y PXY{i,j}.y(1)],'ro-');
     end
 hold on
@@ -32,18 +40,6 @@ end
 hold off
 daspect([1 1 1]);
 
-disp("Gamei uma função ");
-end
-
-function grid = build_grid(polygon,nx,ny)
-
-% computes the division
-dx=(max(polygon.x)-min(polygon.x))/nx;
-dy=(max(polygon.y)-min(polygon.y))/ny;
-
-
-
-end
 
 function PXY=DIVIDEXY(polygon,NX,NY)
     %Input
@@ -76,9 +72,9 @@ function [polygon1 polygon2]=DIVIDEX(polygon,X)
 polygon1=[];
 polygon2=[];
 if not(isempty(polygon))
-    m=length(polygon.x);
-    c1=0;
-    c2=0;
+m=length(polygon.x);
+c1=0;
+c2=0;
 for i=1:1:m
 j=i+1;
 if i==m

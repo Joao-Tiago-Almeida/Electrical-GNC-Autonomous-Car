@@ -27,7 +27,7 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info)
         load('../mapInformation.mat');
     end
     
-    initialPoint = [ceil(pathPoints(1).Position(2)), ceil(pathPoints(1).Position(1))]
+    initialPoint = [ceil(pathPoints(1).Position(2)), ceil(pathPoints(1).Position(1))];
     
     % FUNCTION THAT TRACKS THE BOUNDARIES
     [B,L,n, A] = bwboundaries(occupancyMatrix);
@@ -49,7 +49,7 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info)
     %search the region of the starting point
     
     for i= 1:length(B)
-        pol = polyshape(B{i}(:, 1), B{i}(:, 2));
+        pol = polyshape(B{i}(1:end-1, 1), B{i}(1:end-1, 2));
         plot(pol.Vertices(:, 2), pol.Vertices(:, 1));
         
         if(inpolygon(initialPoint(2), initialPoint(1), pol.Vertices(:, 2), pol.Vertices(:, 1)))
@@ -65,9 +65,11 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info)
     end
     figure();
     plot(pol.Vertices(:, 2), pol.Vertices(:, 1));
-    [connectivityMatrix, nodesPosition] = create_graph(pol);
+    %[connectivityMatrix, nodesPosition] = create_graph(pol);
+    tic
+    create_graph(pol, logical(occupancyMatrix));
+    toc
 end
-
 
 
 
