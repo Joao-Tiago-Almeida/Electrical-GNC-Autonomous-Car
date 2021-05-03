@@ -1,14 +1,14 @@
-function [MAP_info] = scale_map(vert_dim)
+function [MAP_info] = scale_map()
 clc
 %% get the coordinates
 
 % Right green lamp in the star exit of the roundabout
-%lat1 =  38.736798
-%lon1 = -9.139866
+lat1 =  38.736798;
+lon1 = -9.139866;
 
 % Center of the futsal camp
-%lat2 =  38.736258
-%lon2 = -9.137637
+lat2 =  38.736258;
+lon2 = -9.137637;
 
 point_not_valid = true;
 disp("Draw the first location point, and type the coordinates.");
@@ -18,8 +18,9 @@ while(point_not_valid)
     catch
         h1 = drawpoint('LineWidth',1, 'Color','k');
     end
-lat1 = input("Latitude: ");
-lon1 = input("Longitude: ");
+    
+%     lat1 = input("Latitude: ");
+%     lon1 = input("Longitude: ");
     
     valid = input("If you want to draw it again, type 'draw'. If not press any other key. ", 's');
     if(strcmp(valid, "draw")==0)
@@ -28,7 +29,7 @@ lon1 = input("Longitude: ");
     h1.Visible = 'off';
 end
 
-x1 = h1.Position-0.5;
+x1 = round(h1.Position);
 %plot(x1(1), x1(2), '+g', 'MarkerSize', 30, 'LineWidth', 3);
 
 point_not_valid = true;
@@ -39,9 +40,9 @@ while(point_not_valid)
     catch
         h2 = drawpoint('LineWidth',1, 'Color','k');
     end
-
-lat2 = input("Latitude: ");
-lon2 = input("Longitude: ");
+% 
+%     lat2 = input("Latitude: ");
+%     lon2 = input("Longitude: ");
     
     valid = input("If you want to draw it again, type 'draw'. If not press any other key. ", 's');
     if(strcmp(valid, "draw")==0)
@@ -50,11 +51,8 @@ lon2 = input("Longitude: ");
     h2.Visible = 'off';
 end
 
-x2 = h2.Position-0.5;
+x2 = round(h2.Position);
 %plot(x2(1), x2(2), 'xg', 'MarkerSize', 30, 'LineWidth', 3);
-
-x1(2) = vert_dim-x1(2);
-x2(2) = vert_dim-x2(2);
 
 %% get the distance
 
@@ -77,7 +75,7 @@ MAP_info.meters_from_MAP = dist_geo/dist_MAP;    % relation between
 MAP_info.fget_Lat_from_MAP = @(x) (deltaLat/(x2(2)- x1(2))*x + 0.5*(lat1+lat2-(x2(2)+x1(2))*deltaLat/(x2(2)- x1(2))) )*180/pi;   % computes the latitute from the y coordinate
 MAP_info.fget_Lon_from_MAP = @(x) (deltaLon/(x2(1)- x1(1))*x + 0.5*(lon1+lon2-(x2(1)+x1(1))*deltaLon/(x2(1)- x1(1))) )*180/pi;   % computes the longitude from the x coordinate
 
-save('mapInformation.mat','-struct','MAP_info');
+save('../mat_files/mapInformation.mat','-struct','MAP_info');
 
 end
 

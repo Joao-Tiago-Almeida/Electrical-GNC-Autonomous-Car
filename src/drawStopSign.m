@@ -4,5 +4,6 @@ function stopSign = drawStopSign()
         
     h.Color = 'red';
     h.FaceAlpha = 0.6;
+    h.Label = 'STOP';
     stopSign = h.Position;
 end

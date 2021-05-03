@@ -1,16 +1,16 @@
-function safe_matrix = draw_safe_matrix(binaryMatrix, meters_from_MAP, safe_distance, forbidden_zone)
+function safe_matrix = draw_safe_matrix(occupancyMatrix, meters_from_MAP, safe_distance, forbidden_zone)
 
-if nargin < 2
-    load('../binaryMatrix.mat', 'binaryMatrix');
+if nargin < 1
+    load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
     meters_from_MAP = 0.1762;   % meters/pixel
     safe_distance = 1.5;    % meters
     forbidden_zone = 0.64;  % meters
 end
 
-%Get occupancy values
-binaryMatrix(binaryMatrix > 0) = 1;
+% get occupancy values
+occupancyMatrix(occupancyMatrix > 0) = 1;
 
-%   ideal distance to preserve from obstacles
+% ideal distance to preserve from obstacles
 safe_pixels = safe_distance/meters_from_MAP;
 forbidden_pixels = forbidden_zone/meters_from_MAP;
 
@@ -23,27 +23,36 @@ A = inf_limit/(log(safe_pixels+B));
 func_stable_region = @(x) A*log(x+B).*(forbidden_pixels<=x).*(x<=safe_pixels) + inf_limit*(x>safe_pixels);
 
 %   input vector to convulution
-u = 1:ceil(safe_pixels);
-u = func_stable_region(u);
+radius = ceil(safe_pixels);
+v_up = 0:radius;
+v = [v_up flip(v_up)];
+[X,Y] = meshgrid(v,v);
+u = func_stable_region(sqrt(2*(radius).^2) - sqrt((radius-X).^2+(radius-Y).^2));
 
-ff=figure('WindowStyle', 'docked');
+figure('WindowStyle', 'docked');
 hold on
 grid on
 fplot(func_stable_region);
 title("Convulution function");
 xlabel("[meters]")
 ylabel("weigth")
-xlim([0 ceil(1.2*safe_pixels)])
+xlim([0 length(v_up)])
 ylim([0 inf_limit])
-plot(u, 'ro');
+plot(v_up(1):length(v_up), func_stable_region(v_up(1):length(v_up)), 'ro');
+
+figure('WindowStyle', 'docked');
+mesh(u);
+xlabel("pixels")
+ylabel("pixels")
+zlabel("weigth")
 
 %   evaluates the danger zones
-Ch = conv2(u,u', binaryMatrix);
+Ch = conv2(occupancyMatrix, u, 'same');
 
 %   normalize to 1 byte
 normalize = 255/max(max(Ch));
-safe_matrix = round(Ch*normalize .* binaryMatrix);
-save('safe_matrix.mat', 'safe_matrix');
+safe_matrix = round(Ch*normalize .* occupancyMatrix);
+save('../mat_files/safe_matrix.mat', 'safe_matrix');
 
 % view
 f=figure('WindowStyle', 'docked');

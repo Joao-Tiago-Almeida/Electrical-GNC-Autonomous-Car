@@ -4,6 +4,7 @@ function crosswalk = drawCrosswalk()
         
     h.Color = 'white';
     h.FaceAlpha = 0.6;
+    h.Label = 'Cross Walk';
     crosswalk = h.Position;
 end
 

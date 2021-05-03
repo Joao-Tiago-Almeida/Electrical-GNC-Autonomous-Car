@@ -1,4 +1,4 @@
-function [occupancyMatrix, pathPoints, MAP_info] = create_map(path_img);
+function [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map(path_img)
 if nargin < 1
     path_img = '../Maps images/IST_campus.png';
 end
@@ -11,7 +11,7 @@ end
 % close 1
 
 %% display images
-MAP = figure('Name','MAP','NumberTitle','off');
+MAP = figure('Name','MAP','NumberTitle','off'); % figure 1! do not change
 pbaspect([1 1 1]);
 I = imread(path_img);
 MAP.Children.Position = [0 0 1 1];
@@ -24,7 +24,7 @@ MAP.Units = 'pixel';
 % MAP.Position(3:4) = [len len];
 hold on;
 %% set MAP scale
-[MAP_info] = scale_map(size(I,1));
+[MAP_info] = scale_map();
 
 %% Define the roads by drawing polygons
 [X,Y] = meshgrid(1:size(I, 2),1:size(I, 1));
@@ -72,14 +72,22 @@ while true
     end
 end
 
+save('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
+
 %% Picking the start and end points and the intermediate ones
 pathPoints = pickPathPoints(occupancyMatrix);
 
-save('binaryMatrix.mat', 'binaryMatrix');
-save('pathPoints.mat', 'pathPoints');
+%% get safety matrix
 
-figure()
-mesh(flip(occupancyMatrix))
+% supostly read from a global file
+safe_distance = 1.5;    % meters
+forbidden_zone = 0.64;  % meters
+safe_matrix = draw_safe_matrix(occupancyMatrix, MAP_info.meters_from_MAP, safe_distance, forbidden_zone);
+
+%% draw speacial regions on the map
+
+figure;
+mesh(occupancyMatrix)
 colorTheme = [ 0 0 0
 128 128 128
 255 255 255

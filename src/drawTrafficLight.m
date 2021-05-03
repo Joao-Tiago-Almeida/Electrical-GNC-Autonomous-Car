@@ -4,6 +4,7 @@ function crosswalk = drawTrafficLight()
         
     h.Color = 'green';
     h.FaceAlpha = 0.6;
+    h.Label = 'Traffic Light';
     crosswalk = h.Position;
 end
 

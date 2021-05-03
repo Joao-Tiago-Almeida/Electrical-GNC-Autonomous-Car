@@ -3,14 +3,14 @@ close all;
 clc;
 %%
 disp('WELCOME TO THE GRAPHICAL GUIDANCE USER INTERFACE')
-ans = input('Do you want to change the default configurations? y/n\n', 's');
-if(strcmp(ans, 'y'))
+using_default_configurations = input('Do you want to change the default configurations? y/n\n', 's');
+if(strcmp(using_default_configurations, 'y'))
     if(strcmp(input('Do you want to change the map? y/n\n', 's'), 'y'))
         path_img = input('Input new map path', 's');
-        [occupancyMatrix, pathPoints, MAP_info] = create_map(path_img);
+        [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map(path_img);
         
     else 
-        [occupancyMatrix, pathPoints, MAP_info] = create_map();
+        [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map();
         
     end
     defaultFunction(occupancyMatrix, pathPoints, MAP_info);
@@ -18,17 +18,19 @@ else
     defaultFunction();
 end
 
-function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info)
+function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix)
     if nargin < 1
         disp('USING DEFAULT CONFIGURATIONS...')
-        occupancyMatrix = load('../binaryMatrix.mat');
+        occupancyMatrix = load('../mat_files/binaryMatrix.mat');
         occupancyMatrix = occupancyMatrix.binaryMatrix;
-        load('../pathPoints.mat');
-        load('../mapInformation.mat');
+        load('../mat_files/pathPoints.mat', pathPoints);
+        load('../mat_files/mapInformation.mat', mapInformation);
+        load('../mat_files/safe_matrix.mat', safe_matrix);
+        load('../mat_files/mapInformation.mat', MAP_info);
     end
     
-    initialPoint = [ceil(pathPoints(1).Position(2)), ceil(pathPoints(1).Position(1))];
-    
+    initialPoint = [ceil(Position(1)), Position(2))];
+   
     % FUNCTION THAT TRACKS THE BOUNDARIES
     [B,L,n, A] = bwboundaries(occupancyMatrix);
     imshow(occupancyMatrix); hold on;
