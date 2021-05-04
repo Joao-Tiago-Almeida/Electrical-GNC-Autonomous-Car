@@ -43,39 +43,60 @@ occupancyMatrix(occupancyMatrix>0) = 1; %Normalizing to 1 because 2 roads may be
 %% Now defining other specificities in the environment (defined in binary matrix)
 
 % Crosswalk defined in binaryMatrix with 2's
+counter = 0;
 while true
+    if counter==0
+        if ( strcmp(input("\nIf you want to draw a CrossWalk press 'Y', if not press 'N': ", 's'), 'N') == 1 )
+            break;
+        end
+        counter = 1;
+    end
     crossWalk = drawCrosswalk();
     occupancyMatrix(logical(inpolygon(X, Y, crossWalk(:,1)', crossWalk(:,2)' ) .* occupancyMatrix)) = 2;
     
-    if ( strcmp(input("\nIf you're done drawing this crosswalk enter 'Y', if not press 'N': ", 's'), 'Y') == 1 )
+    if ( strcmp(input("\nIf you want to draw more CrossWalks press 'Y', if not press 'N': ", 's'), 'N') == 1 )
         break;
     end
 end
 
 % TrafficLights defined in binaryMatrix with 3's
+counter = 0;
 while true
+    if counter==0
+        if ( strcmp(input("\nIf you want to draw Traffic Lights press 'Y', if not press 'N': ", 's'), 'N') == 1 )
+            break;
+        end
+        counter = 1;
+    end
     trafficLights = drawTrafficLight();
     occupancyMatrix(logical(inpolygon(X, Y, trafficLights(:,1)', trafficLights(:,2)' ) .* occupancyMatrix)) = 3;
     
-    if ( strcmp(input("\nIf you're done drawing this traffic light enter 'Y', if not press 'N': ", 's'), 'Y') == 1 )
+    if ( strcmp(input("\nIf you want to draw more traffic lights press 'Y', if not press 'N': ", 's'), 'N') == 1 )
         break;
     end
 end
 
 % Stop signs defined in binaryMatrix with 4's
+counter = 0;
 while true
+    if counter==0
+        if ( strcmp(input("\nIf you want to draw Stop Signs press 'Y', if not press 'N': ", 's'), 'N') == 1 )
+            break;
+        end
+        counter = 1;
+    end
     stopSign = drawStopSign();
     occupancyMatrix(logical(inpolygon(X, Y, stopSign(:,1)', stopSign(:,2)' ) .* occupancyMatrix)) = 4;
-    
-    if ( strcmp(input("\nIf you're done drawing this stop sign enter 'Y', if not press 'N': ", 's'), 'Y') == 1 )
-        break;
+    if ( strcmp(input("\nIf you want to draw Stop Signs press 'Y', if not press 'N': ", 's'), 'N') == 1 )
+            break;
     end
 end
 
-save('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
+%save('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
+save('../test_files/occupancyMatrix.mat', 'occupancyMatrix');
 
 %% Picking the start and end points and the intermediate ones
-pathPoints = pickPathPoints(occupancyMatrix);
+pathPoints = pickPathPoints();
 
 %% get safety matrix
 
