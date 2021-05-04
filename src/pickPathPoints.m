@@ -24,7 +24,7 @@ while(point_not_valid || size(pathPoints, 1) < 2)
     hc = drawcircle('Center',h1.Position,'Radius',14,'StripeColor','cyan');
     hc.InteractionsAllowed = 'none';
     
-    pathPoints = [pathPoints; h1.Position];
+    pathPoints = [pathPoints; round(h1.Position)];
 
     valid = input("If you want to keep adding points press enter. If not press 'q'. ", 's');
     if(strcmp(valid, "q")==1)
