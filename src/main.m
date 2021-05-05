@@ -8,12 +8,20 @@ if(strcmp(using_default_configurations, 'y'))
     if(strcmp(input('Do you want to change the map? y/n\n', 's'), 'y'))
         path_img = input('Input new map path', 's');
         [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map(path_img);
-        
-    else 
-        [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map();
-        
+    else
+        if(strcmp(input('Do you want to change the road? y/n\n', 's'), 'y'))
+            [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map();
+        else
+            if(strcmp(input('Do you want to change the path points? y/n\n', 's'), 'y'))
+                %loadOccupancyMatrix
+                load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
+                MAP_info = load('../mat_files/mapInformation.mat');
+                load('../mat_files/safe_matrix.mat', 'safe_matrix');
+                pathPoints = pickPathPoints(occupancyMatrix);
+            end
+        end
     end
-    defaultFunction(occupancyMatrix, pathPoints, MAP_info);
+    defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix);
 else
     defaultFunction();
 end
