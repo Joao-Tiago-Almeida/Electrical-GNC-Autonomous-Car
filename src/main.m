@@ -28,18 +28,22 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix
     end
     
     [dim_y, dim_x] = size(occupancyMatrix);
-    nx = 15;
-    ny = 15;
+    nx = 50;
+    ny = 50;
     dx = 1:nx:dim_x;
     dy = 1:ny:dim_y;
     [X,Y] = meshgrid(dx,dy);
     graph = occupancyMatrix(dx,dy)~=0;
-    meshz(X,Y,graph);
+    mesh(X,Y,graph);
     pbaspect([1 1 1]);
     hold on
     plot(pathPoints(:,1), pathPoints(:,2), 'ro')
     view(0,-90);
     
+    grid.x = X;
+    grid.y = Y;
+    grid.graph=graph;
+    save('../mat_files/grid.mat','-struct','grid');
 
     
 %     initialPoint = [ceil(Position(1)), Position(2))];
