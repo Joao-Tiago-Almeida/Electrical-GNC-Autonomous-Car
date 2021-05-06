@@ -6,8 +6,9 @@ if nargin < 1
 end
 
 disp("Pick in the map the INITIAL point, the intermediate points and the FINAL point");
-figure(200);
+
 imshow(occupancyMatrix);
+
 pathPoints = [];
 point_not_valid = true;
 while(point_not_valid || size(pathPoints, 1) < 2)
@@ -17,8 +18,11 @@ while(point_not_valid || size(pathPoints, 1) < 2)
         h1 = drawpoint('LineWidth',1, 'Color','k');
     end
     
-    h1.Visible = 'off';
-    h1.Visible = 'off';
+    try
+        h1.Visible = 'off';
+    catch
+        h1.Visibility = 'off';
+    end
     if ( occupancyMatrix( round(h1.Position(2)), round(h1.Position(1)) ) == 0)
         disp("Please pick a point inside a road!!!");
         continue;
@@ -44,7 +48,9 @@ end
 
 %save('../mat_files/pathPoints.mat', 'pathPoints');
 save('../test_files/pathPoints.mat', 'pathPoints');
-close(200);
+
+Image = getframe(gcf);
+imwrite(Image.cdata, '../mat_files/MAP_w_roads.png', 'png');
 
 end
 

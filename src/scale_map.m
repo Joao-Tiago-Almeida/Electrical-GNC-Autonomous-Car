@@ -26,7 +26,12 @@ while(point_not_valid)
     if(strcmp(valid, "draw")==0)
         point_not_valid = false;
     end
-    h1.Visible = 'off';
+    
+    try
+        h1.Visible = 'off';
+    catch
+        h1.Visibility = 'off';
+    end
 end
 
 x1 = round(h1.Position);
@@ -48,7 +53,12 @@ while(point_not_valid)
     if(strcmp(valid, "draw")==0)
         point_not_valid = false;
     end
-    h2.Visible = 'off';
+    
+    try
+        h2.Visible = 'off';
+    catch
+        h2.Visibility = 'off';
+    end
 end
 
 x2 = round(h2.Position);

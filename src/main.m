@@ -1,6 +1,9 @@
 clear;
 close all;
 clc;
+
+% TODO link - https://notability.com/n/0goKZZ3B87j8BrKcE3ruIi
+
 %%
 disp('WELCOME TO THE GRAPHICAL GUIDANCE USER INTERFACE')
 using_default_configurations = input('Do you want to change the default configurations? y/n\n', 's');
@@ -17,7 +20,17 @@ if(strcmp(using_default_configurations, 'y'))
                 load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
                 MAP_info = load('../mat_files/mapInformation.mat');
                 load('../mat_files/safe_matrix.mat', 'safe_matrix');
+%                 MAP = figure('Name','MAP','NumberTitle','off');
+%                 pbaspect([1 1 1]);
+%                 %I = imread('mat_files/MAP_w_roads.png');
+%                 MAP.Children.Position = [0 0 1 1];
+%                 imshow(I);
+%                 MAP.WindowStyle = 'docked';
+%                 MAP.Units = 'pixel';
                 pathPoints = pickPathPoints(occupancyMatrix);
+            else
+                disp("What the hell are you tring to change... pls change your mind!")
+                return;
             end
         end
     end
@@ -30,10 +43,11 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix
     if nargin < 1
         disp('USING DEFAULT CONFIGURATIONS...');
         load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
-        load('../mat_files/pathPoints.mat', 'pathPoints');
+        load('../test_files/pathPoints.mat', 'pathPoints');
         MAP_info = load('../mat_files/mapInformation.mat');
         load('../mat_files/safe_matrix.mat', 'safe_matrix');
     end
+
     
     [dim_y, dim_x] = size(occupancyMatrix);
     nx = 50;
@@ -41,12 +55,28 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix
     dx = 1:nx:dim_x;
     dy = 1:ny:dim_y;
     [X,Y] = meshgrid(dx,dy);
-    graph = occupancyMatrix(dx,dy)~=0;
+    graph = occupancyMatrix(dy,dx)~=0;
+    f_aux = figure('WindowStyle', 'docked', 'Units' ,'pixel');
     mesh(X,Y,graph);
     pbaspect([1 1 1]);
     hold on
-    plot(pathPoints(:,1), pathPoints(:,2), 'ro')
+
+    [pathPoints_graph,~] = get_closest_point_in_graph(nx,ny,pathPoints,occupancyMatrix);
+    plot(pathPoints_graph(:,1), pathPoints_graph(:,2), 'ro')
     view(0,-90);
+
+    xlim([1 dx(end)]);
+    ylim([1 dy(end)]);
+
+    Image = getframe(gcf);
+    imwrite(Image.cdata, '../mat_files/graph_w_points.png', 'png');
+    %close(f_aux)
+
+    % plot new image
+    figure('WindowStyle', 'docked');
+    I = imread('../mat_files/graph_w_points.png');
+    imshow(I)
+    
     
     grid.x = X;
     grid.y = Y;
@@ -54,53 +84,50 @@ function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix
     save('../mat_files/grid.mat','-struct','grid');
 
     
-%     initialPoint = [ceil(Position(1)), Position(2))];
-%    
-%     % FUNCTION THAT TRACKS THE BOUNDARIES
-%     [B,L,n, A] = bwboundaries(occupancyMatrix);
-%     imshow(occupancyMatrix); hold on;
-%     colors=['b' 'g' 'r' 'c' 'm' 'y'];
-%     for k=1:length(B)
-%       boundary = B{k};
-%       cidx = mod(k,length(colors))+1;
-%       plot(boundary(:,2), boundary(:,1),...
-%            colors(cidx),'LineWidth',2);
-% 
-%       %randomize text position for better visibility
-%       rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
-%       col = boundary(rndRow,2); row = boundary(rndRow,1);
-%       h = text(col+1, row-1, num2str(L(row,col)));
-%       set(h,'Color',colors(cidx),'FontSize',14,'FontWeight','bold');
-%     end
-%     
-%     %search the region of the starting point
-%     
-%     for i= 1:length(B)
-%         pol = polyshape(B{i}(1:end-1, 1), B{i}(1:end-1, 2));
-%         plot(pol.Vertices(:, 2), pol.Vertices(:, 1));
-%         
-%         if(inpolygon(initialPoint(2), initialPoint(1), pol.Vertices(:, 2), pol.Vertices(:, 1)))
-%             %turns sparsed A to a logical matrix
-%             not_sparsed = full(A);
-%             %finds correlation/ holes of the polygon
-%             holes_index = find(not_sparsed(:, i));
-%             break;
-%         end
-%     end
-%     for i=1:length(holes_index)
-%         pol = addboundary(pol, B{holes_index(i)});
-%     end
-%     figure();
-%     plot(pol.Vertices(:, 2), pol.Vertices(:, 1));
-%     %[connectivityMatrix, nodesPosition] = create_graph(pol);
-%     tic
-%     create_graph(pol, logical(occupancyMatrix));
-%     toc
+
 end
 
 
+function [points,allowed_points] = get_closest_point_in_graph(nx,ny,xy,occupancyMatrix)
+    
+    points = [];    %   vector of neighbours in the graph
+    allowed_points = zeros(size(xy,1),1);     %   real points inside the matrix
+    %   float numbers inside the square
+    rem_x = rem(xy(:,1),nx);
+    rem_y = rem(xy(:,2),ny);
+    
+    %   The four corners of the closest square
+    upper_left_corner = [xy(:,1)-rem_x+1, xy(:,2)-rem_y+1];
+    upper_right_corner = [upper_left_corner(:,1)+nx, upper_left_corner(:,2)];
+    lower_left_corner = [upper_left_corner(:,1) upper_left_corner(:,2)+ny];
+    lower_right_corner = [upper_left_corner(:,1)+nx upper_left_corner(:,2)+ny];
+    
+    % iterate over the corners
+    for idx = 1:size(upper_left_corner,1)
+        best_corner = [upper_left_corner(idx,:)
+                       upper_right_corner(idx,:)
+                       lower_left_corner(idx,:)
+                       lower_right_corner(idx,:)];
 
+        dist = vecnorm(xy(idx,:)-best_corner,2,2);    % euclidian distance to the corners: (vec, euclidian norm, dim)
+        
+        [~,I] = sort(dist); % closet neighbour
+        
+        % verify if the point is inside the road
+        for j = 1:length(I)
+            if(occupancyMatrix(best_corner(I(j),2), best_corner(I(j),1)) ~= 0)    % point inside the road
+                points = [points;best_corner(I(j),:)];
+                allowed_points(idx) = 1;
+                break
+            end
+        end
+    end
 
-
-
+    if(sum(allowed_points) == 0)
+        disp("There any any valid points")
+    elseif(sum(allowed_points) == 1)
+        disp("There are only one available points")
+        points = [];
+    end
+end
 

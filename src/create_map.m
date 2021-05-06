@@ -95,6 +95,9 @@ end
 %save('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
 save('../test_files/occupancyMatrix.mat', 'occupancyMatrix');
 
+Image = getframe(gcf);
+imwrite(Image.cdata, 'mat_files/MAP_w_roads.png');
+
 %% Picking the start and end points and the intermediate ones
 pathPoints = pickPathPoints();
 
