@@ -3,40 +3,47 @@ close all;
 
 
 
-load safe_matrix.mat
-load mapInformation.mat
-% Aas coordenadas não se mexem...
-load coordinatematrix.mat
+load perfect_odom.mat
+load pathy.mat
+load pathx.mat
+load paththeta.mat
+
+
 global start_v;
-
-%% Saber a que posição teorica corresponde - Testado!! para 6 = elem
-% minMatrix = min(abs(g(:)-6));
-% [row,col] = find(abs(g-6)==minMatrix);
-
+%% falta fazer colision detection
 %% Simular a matriz do joão
 a = linspace(0,10,10/0.0001);
 b = reshape(a,[1000 100]);
 
 %% Simulation path
-% Car path
-x_start =b(445,2);y_start=b(445,2);
-[x_teo,y_teo,theta_teo,phi_teo] = testingrobot(x_start,y_start);
-% Person 1 Path
-x_start =b(445,2) - 0.05;y_start=0.8;
-[x_teo1,y_teo1,theta_teo1,phi_teo1] = testingrobot(x_start,y_start);
+% % Car path
+% x_start =b(445,2);y_start=b(445,2);
+% [x_teo,y_teo,theta_teo,phi_teo] = testingrobot(x_start,y_start);
+% % Person 1 Path
+% x_start =b(445,2) - 0.05;y_start=0.8;
+% [x_teo1,y_teo1,theta_teo1,phi_teo1] = testingrobot(x_start,y_start);
+% 
 
+% figure(30);
+% plot(x_teo,y_teo)
+% hold on;
+% plot(x_teo1,y_teo1)
+% legend('True Course','Person Walk');
+% legend show;
 
-figure(30);
-plot(x_teo,y_teo)
-hold on;
-plot(x_teo1,y_teo1)
-legend('True Course','Person Walk');
-legend show;
+% IMU_data = [awgn(x_teo',15/0.005,'measured','linear'),awgn(y_teo',15/0.005,'measured','linear'),awgn(theta_teo',15/0.001,'measured','linear')];
+IMU_data = perfect_odom';
 
-IMU_data = [awgn(x_teo',15/0.005,'measured','linear'),awgn(y_teo',15/0.005,'measured','linear'),awgn(theta_teo',15/0.001,'measured','linear')];
-x_new = zeros(size(x_teo,1),1); x_new(1) = x_teo(1);
-y_new = zeros(size(y_teo,1),1); y_new(1) = y_teo(1);
-theta_new = zeros(size(theta_teo,1),1); theta_new(1) = theta_teo(1);
+%% With Timers
+% x_new = zeros(size(x_teo,1),1); x_new(1) = x_teo(1);
+% y_new = zeros(size(y_teo,1),1); y_new(1) = y_teo(1);
+% theta_new = zeros(size(theta_teo,1),1); theta_new(1) = theta_teo(1);
+
+%% For specific simualtions 
+x_new = zeros(size(xt,2),1); x_new(1) = xt(1);
+y_new = zeros(size(yt,2),1); y_new(1) = yt(1);
+theta_new = zeros(size(thetat,2),1); theta_new(1) = thetat(1);
+
 xunc = .01; % 
 yunc = .01; % 
 Flag = 0;
@@ -45,23 +52,73 @@ Flag = 0;
 Q = eye(3).*0.001;
 R = eye(3).*0.001;
 P = [xunc^2 0 0 ; 0 xunc^2 0 ;0 0 (xunc*0.1)^2];
-x_teo_matrix(1) = x_teo(1);
-y_teo_matrix(1) = y_teo(1);
-for i = 2:size(x_teo,2)
+x_teo_matrix(1) = x_new(1);
+y_teo_matrix(1) = y_new(1);
+
+
+range_of_radar = 5; %% Number of matrix cells to see 
+% Occupancy grid
+occ = ones(1000,100);
+occ(1:10,:) = 0;
+occ(:,1:20) = 0;
+occ(:,end) = 0;
+occ(:,end-10:end) = 0;
+occ(end-10:end,:) = 0;
+
+
+% Vector of points for GPS Break Ups
+GPS_Breakups = [randi([1 size(xt,2)],1,1),randi([1 size(xt,2)],1,1),...
+                randi([1 size(xt,2)],1,1),randi([1 size(xt,2)],1,1),...
+                randi([1 size(xt,2)],1,1)];
+
+% No relatório falar dos PS Breakups, solução com e sem odmetria.
+% Para além disso, testar com mais GPS BreakUps e com eles mais seguidos.
+% Em principio, quando estão seguido a odmetria é melhor, caso contrário
+% sem odometria ou meter só o barómetro com GPS = 0;
+            
+for i = 2:size(perfect_odom,2)%size(x_teo,2)
+    %% Theoretical Path from Matrix for the Car
+    % Using Matrix
+%     minMatrix = min(abs(b(:)-x_teo(i)));
+%     [row_x(i),col_x(i)] = find(abs(b-x_teo(i))==minMatrix);
+%     minMatriy = min(abs(b(:)-y_teo(i)));
+%     [row_y(i),col_y(i)] = find(abs(b-y_teo(i))==minMatriy);
+%     x_teo_matrix(i) = b(row_x(i),col_x(i));
+%     y_teo_matrix(i) = b(row_y(i),col_y(i));
+
+    % For Simulated testing without a Matrix
+      x_teo_matrix(i) = xt(i);
+      y_teo_matrix(i) = yt(i); 
+
+    %% Theoretical Path from Matrix for the Person
     
-    minMatrix = min(abs(b(:)-x_teo(i)));
-    [row_x(i),col_x(i)] = find(abs(b-x_teo(i))==minMatrix);
-    minMatriy = min(abs(b(:)-y_teo(i)));
-    [row_y(i),col_y(i)] = find(abs(b-y_teo(i))==minMatriy);
-    x_teo_matrix(i) = b(row_x(i),col_x(i));
-    y_teo_matrix(i) = b(row_y(i),col_y(i));
-    %% Prediction Phase
+%     minMatrix = min(abs(b(:)-x_teo1(i)));
+%     [row_x(i),col_x(i)] = find(abs(b-x_teo1(i))==minMatrix);
+%     minMatriy = min(abs(b(:)-y_teo1(i)));
+%     [row_y(i),col_y(i)] = find(abs(b-y_teo1(i))==minMatriy);
+%     xp_teo_matrix(i) = b(row_x(i),col_x(i));
+%     yp_teo_matrix(i) = b(row_y(i),col_y(i));
+   
+%      if occ(row_x(i),col_x(i)) ~= 0
+%          occ(row_x(i),col_x(i)) = 100; % Means there is a person
+%      end
+%      
+%      for j = 1:range_of_radar
+% %          if()
+%           occ(row_x(i)+j,col_x(i));
+%           occ(row_x(i)+j,col_x(i)+j);
+%           occ(row_x(i)+j,col_x(i)-j);
+%      end
+%      
+     
+     %% Prediction Phase
 
     %% Process State
     Norma = norm([x_teo_matrix(i) y_teo_matrix(i)]-[x_teo_matrix(i-1) y_teo_matrix(i-1)]);
+    phi = IMU_data(i,3) - IMU_data(i-1,3);
     x_new(i) = x_new(i-1) + Norma*cos(theta_new(i-1));
     y_new(i) = y_new(i-1) + Norma*sin(theta_new(i-1));
-    theta_new(i) = IMU_data(i,3);
+    theta_new(i) = theta_new(i-1) + phi;
 
 
     F = [1 0 -Norma*sin(theta_new(i-1));...
@@ -80,8 +137,7 @@ for i = 2:size(x_teo,2)
     %Norma = norm([IMU_data(i,1) IMU_data(i,2)]);
     y_hat = [norm([x_new(i) y_new(i)]);atan(y_new(i)/x_new(i))];
     
-    % Vector of points for GPS Break Ups
-    GPS_Breakups = [5,12,22,34,40];
+
     if ismember(i,GPS_Breakups)
         Flag = 1;
     end
@@ -91,18 +147,39 @@ for i = 2:size(x_teo,2)
     if ~Flag       
         y_theory = [norm([x_teo_matrix(i) y_teo_matrix(i)]);atan(y_teo_matrix(i)/x_teo_matrix(i))];
     else
-        y_theory = [norm([IMU_data(i,1) IMU_data(i,2)]);atan(IMU_data(i,2)/IMU_data(i,1))];
+        %% If we decide to use the Prediction Model with odometry
+        %y_theory = [norm([IMU_data(i,1) IMU_data(i,2)]);atan(IMU_data(i,2)/IMU_data(i,1))];
+        %% If we decide to not use odometry and only use State Model
+        % Just update gain and Covariance
+%         K = P*H'/(H*P*H' + H*Q*H');
+%         P = (eye(size(K,1))-K*H)*P;
+        Flag = 0;
+        continue;
     end
-    Flag = 0;
+    %% Gaussian error of 0.1%
+    u = [(awgn(y_hat(1),abs(y_hat(1)/0.001),'measured','linear') - y_hat(1)) ...
+        ;(awgn(y_hat(2),abs(y_hat(2)/0.001),'measured','linear') - y_hat(2))];
+    %% remove if NaN
+    u(isnan(u)) = 0;
     y = y_theory - y_hat;
     K = P*H'/(H*P*H' + H*Q*H');
-    aux =  [x_new(i);y_new(i);theta_new(i)] + K*y;
+    %% Position Gaussian error
+    x_pos = [x_new(i);y_new(i);theta_new(i)];
+%     w = [(awgn(x_pos(1),abs(x_pos(1)/0.00001),'measured','linear') - x_pos(1)) ...
+%         ;(awgn(x_pos(2),abs(x_pos(2)/0.00001),'measured','linear') - x_pos(2)) ...
+%         ;(awgn(x_pos(3),abs(x_pos(3)/0.00001),'measured','linear') - x_pos(3))];    
+%     w(isnan(w)) = 0;
+    aux =  x_pos + K*y ;%+ w;
     P = (eye(size(K,1))-K*H)*P;
 
     x_new(i) = aux(1);
     y_new(i) = aux(2);
     theta_new(i) = aux(3);
-
+    
+%     if occ(row_x(i),col_x(i)) == 100
+%          occ(row_x(i),col_x(i)) = 1; % Means there is a person
+%      end
+     
 end
 % Position where GPS Breakup Happened
 X_breakups = [x_new(GPS_Breakups(1));x_new(GPS_Breakups(2));x_new(GPS_Breakups(3)); ...
