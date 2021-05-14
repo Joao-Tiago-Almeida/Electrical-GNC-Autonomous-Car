@@ -131,19 +131,11 @@ classdef MinHeap < Heap
                 % search in the heap for the node
                 for i = 1:this.k
                     if(key.index ~= this.x(i).index); continue; end
-                    
-                    if(key.previous ~= this.x(i).previous)
-                        if(key.cost < this.x(i).cost)
-                            DecreaseKey(this,i,key)
-                        else
-%                             this.x(i)=key;
-%                             this.MinHeapify(i);
-                            return;
-                        end
-                    % found node in the matrix
-                    elseif(key.cost < this.x(i).cost)
+           
+                    if(key.cost < this.x(i).cost)
                         DecreaseKey(this,i,key)
                     end
+                    
                     return
                 end
                 disp("Ops, something is wrong, I should have update the key ... but I did not find it")
