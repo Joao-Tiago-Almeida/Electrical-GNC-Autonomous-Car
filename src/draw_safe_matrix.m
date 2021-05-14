@@ -52,8 +52,7 @@ Ch = conv2(occupancyMatrix, u, 'same');
 %   normalize to 1 byte
 normalize = 255/max(max(Ch));
 safe_matrix = round(Ch*normalize .* occupancyMatrix);
-%save('../mat_files/safe_matrix.mat', 'safe_matrix');
-save('../test_files/safe_matrix.mat', 'safe_matrix');
+save('../mat_files/safe_matrix.mat', 'safe_matrix');
 
 % view
 f=figure('WindowStyle', 'docked');

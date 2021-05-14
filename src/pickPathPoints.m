@@ -1,8 +1,7 @@
 function pathPoints = pickPathPoints(occupancyMatrix)
 
 if nargin < 1
-    %load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
-    load('../test_files/occupancyMatrix.mat', 'occupancyMatrix');
+    load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
 end
 
 disp("Pick in the map the INITIAL point, the intermediate points and the FINAL point");
@@ -46,8 +45,7 @@ while(point_not_valid || size(pathPoints, 1) < 2)
     h.FaceAlpha = 0.8;
 end
 
-%save('../mat_files/pathPoints.mat', 'pathPoints');
-save('../test_files/pathPoints.mat', 'pathPoints');
+save('../mat_files/pathPoints.mat', 'pathPoints');
 
 Image = getframe(gcf);
 imwrite(Image.cdata, '../mat_files/MAP_w_roads.png', 'png');

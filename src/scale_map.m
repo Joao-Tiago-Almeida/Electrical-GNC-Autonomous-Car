@@ -85,8 +85,7 @@ MAP_info.meters_from_MAP = dist_geo/dist_MAP;    % relation between
 MAP_info.fget_Lat_from_MAP = @(x) (deltaLat/(x2(2)- x1(2))*x + 0.5*(lat1+lat2-(x2(2)+x1(2))*deltaLat/(x2(2)- x1(2))) )*180/pi;   % computes the latitute from the y coordinate
 MAP_info.fget_Lon_from_MAP = @(x) (deltaLon/(x2(1)- x1(1))*x + 0.5*(lon1+lon2-(x2(1)+x1(1))*deltaLon/(x2(1)- x1(1))) )*180/pi;   % computes the longitude from the x coordinate
 
-%save('../mat_files/mapInformation.mat','-struct','MAP_info');
-save('../test_files/mapInformation.mat','-struct','MAP_info');
+save('../mat_files/mapInformation.mat','-struct','MAP_info');
 
 end
 

@@ -20,12 +20,11 @@ if(strcmp(using_default_configurations, 'y'))
                 load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
                 MAP_info = load('../mat_files/mapInformation.mat');
                 load('../mat_files/safe_matrix.mat', 'safe_matrix');
-%                 MAP = figure('Name','MAP','NumberTitle','off');
+%                 MAP = figure('Name','MAP','NumberTitle','off','WindowStyle', 'docked'););
 %                 pbaspect([1 1 1]);
 %                 %I = imread('mat_files/MAP_w_roads.png');
 %                 MAP.Children.Position = [0 0 1 1];
 %                 imshow(I);
-%                 MAP.WindowStyle = 'docked';
 %                 MAP.Units = 'pixel';
                 pathPoints = pickPathPoints(occupancyMatrix);
             else
@@ -34,63 +33,60 @@ if(strcmp(using_default_configurations, 'y'))
             end
         end
     end
-    defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix);
+    defaultFunction(occupancyMatrix, pathPoints);
 else
     defaultFunction();
 end
 
-function [] = defaultFunction(occupancyMatrix, pathPoints, MAP_info, safe_matrix)
+function [] = defaultFunction(occupancyMatrix, pathPoints)
     if nargin < 1
         disp('USING DEFAULT CONFIGURATIONS...');
         load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
-        load('../test_files/pathPoints.mat', 'pathPoints');
+        load('../mat_files/pathPoints.mat', 'pathPoints');
         MAP_info = load('../mat_files/mapInformation.mat');
         load('../mat_files/safe_matrix.mat', 'safe_matrix');
     end
 
     
     [dim_y, dim_x] = size(occupancyMatrix);
-    nx = 50;
-    ny = 50;
-    dx = 1:nx:dim_x;
-    dy = 1:ny:dim_y;
+    nxy = 5;
+    dx = 1:nxy:dim_x;
+    dy = 1:nxy:dim_y;
     [X,Y] = meshgrid(dx,dy);
-    graph = occupancyMatrix(dy,dx)~=0;
+    grid = occupancyMatrix(dy,dx)~=0;
     f_aux = figure('WindowStyle', 'docked', 'Units' ,'pixel');
-    mesh(X,Y,graph);
+    mesh(X,Y,grid);
     pbaspect([1 1 1]);
     hold on
 
-    [pathPoints_graph,~] = get_closest_point_in_graph(nx,ny,pathPoints,occupancyMatrix);
-    plot(pathPoints_graph(:,1), pathPoints_graph(:,2), 'ro')
+    [pathPoints_grid,~] = get_closest_point_in_grid(nxy,nxy,pathPoints,occupancyMatrix);
+    plot(pathPoints_grid(:,1), pathPoints_grid(:,2), 'ro')
     view(0,-90);
 
     xlim([1 dx(end)]);
     ylim([1 dy(end)]);
 
     Image = getframe(gcf);
-    imwrite(Image.cdata, '../mat_files/graph_w_points.png', 'png');
+    imwrite(Image.cdata, '../mat_files/grid_w_points.png', 'png');
     %close(f_aux)
 
     % plot new image
     figure('WindowStyle', 'docked');
-    I = imread('../mat_files/graph_w_points.png');
+    I = imread('../mat_files/grid_w_points.png');
     imshow(I)
     
     
-    grid.x = X;
-    grid.y = Y;
-    grid.graph=graph;
-    save('../mat_files/grid.mat','-struct','grid');
-
+    Grid.x = X;
+    Grid.y = Y;
+    Grid.grid=grid;
+    save('../mat_files/grid.mat','-struct','Grid');
     
-
 end
 
 
-function [points,allowed_points] = get_closest_point_in_graph(nx,ny,xy,occupancyMatrix)
+function [points,allowed_points] = get_closest_point_in_grid(nx,ny,xy,occupancyMatrix)
     
-    points = [];    %   vector of neighbours in the graph
+    points = [];    %   vector of neighbours in the grid
     allowed_points = zeros(size(xy,1),1);     %   real points inside the matrix
     %   float numbers inside the square
     rem_x = rem(xy(:,1),nx);
@@ -129,5 +125,7 @@ function [points,allowed_points] = get_closest_point_in_graph(nx,ny,xy,occupancy
         disp("There are only one available points")
         points = [];
     end
+    
+    save('../mat_files/pathPoints_grid.mat', 'points');
 end
 

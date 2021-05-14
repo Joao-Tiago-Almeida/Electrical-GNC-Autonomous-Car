@@ -1,6 +1,9 @@
 function [occupancyMatrix, pathPoints, MAP_info, safe_matrix] = create_map(path_img)
 if nargin < 1
     path_img = '../Maps images/IST_campus.png';
+    MAP_info = load('../mat_files/mapInformation.mat');
+else
+    MAP_info = scale_map();
 end
 %% get window dimensions
 % f1=figure(1);
@@ -24,7 +27,6 @@ MAP.Units = 'pixel';
 % MAP.Position(3:4) = [len len];
 hold on;
 %% set MAP scale
-[MAP_info] = scale_map();
 
 %% Define the roads by drawing polygons
 [X,Y] = meshgrid(1:size(I, 2),1:size(I, 1));
@@ -92,11 +94,11 @@ while true
     end
 end
 
-%save('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
-save('../test_files/occupancyMatrix.mat', 'occupancyMatrix');
-
+save('../mat_files/MAP.mat', 'MAP');
+save('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
 Image = getframe(gcf);
-imwrite(Image.cdata, 'mat_files/MAP_w_roads.png');
+pause(0.2)
+imwrite(Image.cdata, '../mat_files/MAP_w_roads.png');
 
 %% Picking the start and end points and the intermediate ones
 pathPoints = pickPathPoints();
