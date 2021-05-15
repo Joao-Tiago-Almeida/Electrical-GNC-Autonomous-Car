@@ -1,10 +1,27 @@
-function place_car(points,theta_vect,phi_vect,duty_cicle)
+% clc; clear; close all
+% 
+% load('../mat_files/run_points.mat','run_points');
+% figure('WindowStyle', 'docked');
+% hold on;
+% axis equal
+% plot(run_points(:,1),run_points(:,2));
+% 
+% place_car(run_points,15);
+
+function place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
     % points : vector of points where the will be displayed
     % duty_cicle : frequency of cars to display
     % theta_vect: vector of the car's angle
     % phi_vect: vector of the steering wheel's angle
     
-    meter_per_pixel = 0.1764;
+    if(nargin<3)
+        meter_per_pixel = 0.1764;
+        a = diff(points);
+        a = [a; a(end, :)];
+        theta_vect = atan2(a(:, 2),a(:,1));
+        phi_vect = zeros(size(theta_vect));
+    end
+
 
     % car metrics oin meters
     L = 2.2;
@@ -29,8 +46,10 @@ function place_car(points,theta_vect,phi_vect,duty_cicle)
     car = car/meter_per_pixel;
 
     % new transformation
+    duty_cicle = min(100,max(1,duty_cicle));
+    n_cars = round(100/duty_cicle);
+    n_cars = 1:n_cars:length(points);
     
-    n_cars = 1:duty_cicle:length(points);
     for c = n_cars
         X = points(c,1);
         Y = points(c,2);
@@ -70,10 +89,10 @@ end
 
 % clc; clear; close all
 % 
-% load('../G_files/run_points.mat','run_points');
+% load('../mat_files/run_points.mat','run_points');
 % figure('WindowStyle', 'docked');
 % hold on;
 % axis equal
 % plot(run_points(:,1),run_points(:,2));
 % 
-% place_car(run_points,zeros(size(run_points)),zeros(size(run_points)),20);
+% place_car(run_points,20);
