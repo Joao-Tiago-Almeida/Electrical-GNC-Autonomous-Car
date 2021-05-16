@@ -15,7 +15,8 @@ function place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
     % phi_vect: vector of the steering wheel's angle
     
     if(nargin<3)
-        meter_per_pixel = 0.1764;
+        MAP_info = load('../mat_files/mapInformation.mat');
+        meter_per_pixel = MAP_info.meters_from_MAP;
         a = diff(points);
         a = [a; a(end, :)];
         theta_vect = atan2(a(:, 2),a(:,1));
@@ -79,7 +80,7 @@ function place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
         plot(t_wheals(:,1),t_wheals(:,2),'r*',"MarkerSize",markers_size)
         plot(t_front_wheel(1,1),t_front_wheel(1,2),'ko',"MarkerSize",markers_size)
         plot([t_front_wheel(1,1), t_front_wheel(1,1)+t_front_wheel(2,1)],...
-         [t_front_wheel(1,2), t_front_wheel(1,2)+t_front_wheel(2,2)],'m-*',"MarkerSize",markers_size-2)
+        [t_front_wheel(1,2), t_front_wheel(1,2)+t_front_wheel(2,2)],'m-*',"MarkerSize",markers_size-2)
 
 
     end
