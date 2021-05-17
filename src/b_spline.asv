@@ -1,13 +1,16 @@
+
 clc;
 close all;
 clear variables;
-load('../../occupancyMatrix.mat', 'occupancyMatrix');
-load('../../run_points.mat', 'run_points');
+load ../mat_files/run_points.mat;
+load ../mat_files/occupancyMatrix.mat
 
- [change_points, cluster] = pathSegmentation(run_points);
- save('../mat_files/segmentation.mat', 'change_points', 'cluster');
-
-function  [change_points, cluster] = pathSegmentation(run_points)
+ [change_points, cluster, threshold] = pathSegmentation(run_points);
+ figure;
+ plot(change_points(:, 1), change_points(:, 2) )
+ hold on
+  
+function  [change_points, cluster, threshold] = pathSegmentation(run_points)
     a = diff(run_points);
     a = [a(1, :); a];
     slopes = atan2(a(:, 2),a(:,1));
@@ -38,11 +41,4 @@ function  [change_points, cluster] = pathSegmentation(run_points)
     gscatter(change_points(:, 1), change_points(:, 2), cluster);
     axis equal
 end
-
-
-
-
-
-
-
 

@@ -2,8 +2,8 @@ close all
 clear;
 clc;
 %%
-load('../../occupancyMatrix.mat', 'occupancyMatrix');
-load('../../run_points.mat', 'run_points');
+load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
+load('../mat_files/run_points.mat', 'run_points');
 
  [change_points, cluster, threshold] = pathSegmentation(run_points);
  save('../mat_files/segmentation.mat', 'change_points', 'cluster');
@@ -22,6 +22,7 @@ while(i <  length(run_points(:,1)))
     if i == 11
         disp('i = 11')
     end
+    
     if isequal(run_points(i,:), change_points(last_cluster, :)) || b
         b = true;
         if round(norm(run_points(i,:) - change_points(last_cluster,:))) > threshold/2

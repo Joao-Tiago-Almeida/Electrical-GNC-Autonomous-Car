@@ -6,7 +6,7 @@ clc;
 
 %%
 disp('WELCOME TO THE GRAPHICAL GUIDANCE USER INTERFACE')
-using_default_configurations = input('Do you want to change the default configurations? y/n\n', 's');
+using_default_configurations = input('Do you want to change the default configurations (Map Img/ Define Roads / New Path)? y/n\n', 's');
 if(strcmp(using_default_configurations, 'y'))
     if(strcmp(input('Do you want to change the map? y/n\n', 's'), 'y'))
         path_img = input('Input new map path', 's');
