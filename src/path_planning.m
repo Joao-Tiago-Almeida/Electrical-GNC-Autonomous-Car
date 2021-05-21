@@ -1,9 +1,9 @@
 clear all;
 close all;
-clc;
+%clc;
 
 %% Load map information
-global map_grid     % global filesin this file
+global map_grid points MAP_info     % global vars in this file
 load('../mat_files/occupancyMatrix.mat', 'occupancyMatrix');
 load('../mat_files/safe_matrix.mat', 'safe_matrix');
 load('../mat_files/pathPoints_grid.mat', 'points');
@@ -21,7 +21,6 @@ global d_occp_xy dx dy
 dx = size(map_grid,2);
 dy = size(map_grid,1);
 d_occp_xy = f_Graph.x(1,2)-f_Graph.x(1,1);
-d_occp_y = f_Graph.y(2,1)-f_Graph.y(1,1);
 
 % mapping between grid access and 1D vect idx
 global yx_2_idx_graph idx_graph_2_xy
@@ -31,8 +30,8 @@ idx_graph_2_xy = @(idx) [rem(idx,dx) (idx-rem(idx,dx))/dx+1];
 % change to symmatric matrix since it is a minimization problem
 global m_occupancy m_safe 
 occupancyMatrix(occupancyMatrix==2)=1;  % ignoring crosswalks
-occupancyMatrix(occupancyMatrix==3)=0.6;% slown down on traffic lights (the less, the lighter)
-occupancyMatrix(occupancyMatrix==4)=0;  % stop in Stop sings
+occupancyMatrix(occupancyMatrix==3)=1;% slown down on traffic lights (the less, the lighter)
+occupancyMatrix(occupancyMatrix==4)=1;  % stop in Stop sings
 m_occupancy = 1-occupancyMatrix;
 m_safe = 1-safe_matrix/max(max(safe_matrix));
 
@@ -52,15 +51,18 @@ sub_path = [];  % last confirmed path but it migth not occured if the stop point
 path_data = []; % accumulated path with start and stop points confirmed
 prev_node=[];   % information about the start point 
 prev_prev_node=[];  % information about the start point before
-tic
 i=1;
 valid_points = 1:size(points_grid,1);
+wb=waitbar(0,"Planning The Best Path");
+wb.Position(1)= wb.Position(1)-wb.Position(3);
+tic
 while(i<length(valid_points))
     start = points_grid(valid_points(i),:);
     idx_start = yx_2_idx_graph(start(2),start(1));
     stop = points_grid(valid_points(i+1),:);
     idx_stop = yx_2_idx_graph(stop(2),stop(1));
     
+    wb=waitbar((i-1)/length(valid_points),wb,"Planning sub Path "+num2str(i));
     dijkstra(idx_start,idx_stop,prev_node,"time");
     
     if(isempty(node_location(idx_stop).cost))
@@ -81,6 +83,7 @@ while(i<length(valid_points))
     heap.Clear();
 end
 toc
+delete(wb);
 
 % UNCOMENT when this moves to a function
 if(isempty(sub_path))
@@ -91,77 +94,99 @@ end
 path_data = [points_grid(1,:),zeros(1,size(path_data,2)-2);    path_data;  sub_path];
 
 % Path analysis
+max_velocity=30; %Km/h
 n_points = length(path_data);
 path_distance = d_occp_xy*path_data(end,5)*MAP_info.meters_from_MAP;
-mean_velocity = 25*sum(path_data(:,4))/n_points;    % Max velocity : 25 Km/h
+mean_velocity = max_velocity*sum(path_data(:,4))/n_points; 
 path_duration = 3.6*path_distance/mean_velocity;    % 1m/s = 3.6 Km/mh
 average_velocity = 3.6*d_occp_xy*norm(points_grid(1,:)-points_grid(end,:))*MAP_info.meters_from_MAP/path_duration;
 disp(" /'---------Path-Information---------'\")
 disp("| Points:             "   +num2str(n_points)             +  "     pixels.  |")
-disp("| Distance:           "   +num2str(path_distance,"%.2f")   +  "   meters.  |")
+disp("| Distance:           "   +num2str(path_distance,"%.2f")   +  "  meters.  |")
 disp("| Duration:           "   +num2str(path_duration,"%.2f")   +  "   seconds. |")
 disp("| Mean Velocity:      "   +num2str(mean_velocity,"%.2f")   +  "   Km/h.    |")
 disp("| Average Velocity:   "   +num2str(average_velocity,"%.2f")+  "   Km/h.    |")
 disp(" \,----------------------------------,/")
 % transpose to the original map
-run_points = [(path_data(:,1)-1)*d_occp_xy+1 (path_data(:,2)-1)*d_occp_y+1];
+run_points = [(path_data(:,1)-1)*d_occp_xy+1 (path_data(:,2)-1)*d_occp_xy+1];
 save('../mat_files/run_points.mat', 'run_points');
 
+% validate checkpoints
+checkpoints=points(valid_points,:);
+save('../mat_files/checkpoints.mat', 'checkpoints');
+
 %% Final plots and verifications
-MAP = load('../mat_files/MAP.mat');
-hold on
-plot(points(:,1),points(:,2),"ko","LineWidth",6)
-%plot(run_points(:,1),run_points(:,2),"LineWidth",1)
-%place_car(run_points,10)
-patch([run_points(:,1);NaN],[run_points(:,2);NaN],[path_data(:,4);NaN],[25*path_data(:,4);NaN],'EdgeColor','interp',"Linewidth",5);
-cb=colorbar;
-cb.TickLabels=cb.TickLabels+" Km/h";
-cb.Position = [0.91 0.05 0.02 0.9];
-colormap(jet);
-Image = getframe(gcf);
-imwrite(Image.cdata, '../mat_files/dijkstra_path.png', 'png');
-
-% figure('WindowStyle', 'docked');clf;
-% mesh(map_grid)
-% view(0,-90)
-% hold on
-% plot(points_grid(:,1),points_grid(:,2),"k*")
-% patch(path_data(:,1),path_data(:,2),path_data(:,4),path_data(:,4),'EdgeColor','interp');
-
-% figure('WindowStyle', 'docked');
-% hold on
-% plot(path_data(:,3))
-% grid on
-% xlabel("Path")
-% ylabel("Accumulative cost")
-% title("Run Cost")
-
-figure('WindowStyle', 'docked');
-t=0:seconds(path_duration)/(n_points-1):seconds(path_duration)';
-tiledlayout(3,1);
-% 
-% % Tile 1
-nexttile
-hold on
-title("Run Velocity per time")
-plot(t,path_data(:,4));
-xlim([0 seconds(path_duration)])
-% 
-% % Tile 2
-nexttile
-hold on
-title("Run Velocity per distance")
-plot(path_data(:,5),path_data(:,4));
-xlim([0 path_data(end,5)])
-% 
-% % Tile 3
-nexttile
-hold on
-title("Run Cost")
-plot(t,path_data(:,3));
-xlim([0 seconds(path_duration)])
-
+inspect_plots(run_points, path_data, n_points, path_duration, max_velocity)
 disp("EOF")
+
+path_smoothing
+
+function inspect_plots(run_points, path_data, n_points, path_duration, max_velocity)
+    global points MAP_info
+    MAP = load('../mat_files/MAP.mat');
+    hold on
+    plot(points(:,1),points(:,2),"ko","LineWidth",6)
+    %plot(run_points(:,1),run_points(:,2),"LineWidth",1)
+    %place_car(run_points,10)
+    p = patch([run_points(:,1);NaN],[run_points(:,2);NaN],[path_data(:,4);NaN],[max_velocity*path_data(:,4);NaN],'EdgeColor','interp',"Linewidth",5);
+    cb=colorbar;
+    cb.TickLabels=cb.TickLabels+" Km/h";
+    cb.Position = [0.91 0.05 0.02 0.9];
+    colormap(jet);
+    Image = getframe(gcf);
+    imwrite(Image.cdata, '../mat_files/dijkstra_path.png', 'png');
+
+    % figure('WindowStyle', 'docked');clf;
+    % mesh(map_grid)
+    % view(0,-90)
+    % hold on
+    % plot(points_grid(:,1),points_grid(:,2),"k*")
+    % patch(path_data(:,1),path_data(:,2),path_data(:,4),path_data(:,4),'EdgeColor','interp');
+
+    % figure('WindowStyle', 'docked');
+    % hold on
+    % plot(path_data(:,3))
+    % grid on
+    % xlabel("Path")
+    % ylabel("Accumulative cost")
+    % title("Run Cost")
+
+    figure('WindowStyle', 'docked');
+    t=0:seconds(path_duration)/(n_points-1):seconds(path_duration)';
+    tiledlayout(3,1);
+    % 
+    % % Tile 1
+    nexttile
+    hold on
+    title("Run Velocity per time")
+    plot(t,path_data(:,4));
+    xlim([0 seconds(path_duration)])
+    % 
+    % % Tile 2
+    nexttile
+    hold on
+    title("Run Velocity per distance")
+    plot(path_data(:,5),path_data(:,4));
+    xlim([0 path_data(end,5)])
+    % 
+    % % Tile 3
+    nexttile
+    hold on
+    title("Run Cost")
+    plot(t,path_data(:,3));
+    xlim([0 seconds(path_duration)])
+
+    figure('WindowStyle', 'docked');
+    lat = MAP_info.fget_Lat_from_MAP(run_points(:,2));
+    lon = MAP_info.fget_Lon_from_MAP(run_points(:,1));
+    geoplot(lat,lon,'g-*')
+
+    %% Web map
+    % webmap
+    % wmline(lat,lon)
+    % wmmarker(MAP_info.fget_Lat_from_MAP(points(:,2)),MAP_info.fget_Lon_from_MAP(points(:,1)))
+
+end
 %% Auxiliar functions
 
 function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
@@ -178,9 +203,11 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
     in_heap(idx_start) = 1;
     
 	reach_endpoint = false;
-
+    
+    wb=waitbar(0,"Closiness of the destination");
     % Do Dijkstra
     while(~reach_endpoint && heap.Count()>0)
+        
         node = heap.ExtractMin();
         node_location(node.index)=node;
         in_heap(node.index) = -1;
@@ -192,8 +219,13 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
         % Confirm if the end point was reached
         if(idx_finish==node.index)
             disp("Computed points: "+num2str(sum(in_heap==-1)))
+            delete(wb);
             return
         end
+        waitbar(1-norm(idx_graph_2_xy(node.index)-idx_graph_2_xy(idx_finish))/...
+            (norm(idx_graph_2_xy(idx_start)-idx_graph_2_xy(idx_finish))),...
+            wb,...
+            "Closiness of the destination");
         
         reachable_neighbours = identify_reachable_neighbours(idx_graph_2_xy(node.index),node.previous, sum(in_heap==-1)==1);
 
@@ -203,16 +235,12 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
             step = directions.idxs(i,:);
             new_pos = idx_graph_2_xy(node.index)+step;
             
-            % new node informatino
+            % new node information
             new_idx = yx_2_idx_graph(new_pos(2),new_pos(1));
             direction=directions.names(i);
             velocity = compute_velocity(node.previous,directions.names(i),node.velocity,new_pos);
             distance = node.distance+(directions.names(i)==node.previous)+(directions.names(i)~=node.previous)*sqrt(2);            
             cost = compute_cost(new_pos,velocity,distance,loss_criterium,node.cost);
-            
-%             if(new_idx==15465)
-%                 disp("o que ta a acontecer?")
-%             end
             
             % Define the new atempt
             node_aux = new_node(cost,distance,new_idx,direction,velocity);
@@ -227,7 +255,7 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
             end
         end
     end
-     
+    delete(wb);
 end
 
 function subpath = get_path(idx_start,idx_finish)
@@ -311,10 +339,10 @@ function velocity = compute_velocity(start_dir,end_dir,prev_velocity,end_pos)
     global m_occupancy d_occp_xy
     
     if (prev_velocity==0)    % the car was stop in the last moment
-        velocity = 0.1;
-    elseif (start_dir ~= end_dir) % 45degrees curve
-        velocity = prev_velocity*atan(1);
-    else    % straight movement
+        velocity = 0.05;
+    elseif (start_dir ~= end_dir) % 45 degrees curve
+    	velocity = prev_velocity*atan(1);
+    else                        % straight movement
         velocity_increment = 1.1;
         velocity = min(1,prev_velocity*velocity_increment);
     end

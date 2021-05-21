@@ -49,7 +49,7 @@ function [] = defaultFunction(occupancyMatrix, pathPoints)
 
     
     [dim_y, dim_x] = size(occupancyMatrix);
-    nxy = 5;
+    nxy = 3;
     dx = 1:nxy:dim_x;
     dy = 1:nxy:dim_y;
     [X,Y] = meshgrid(dx,dy);

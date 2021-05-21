@@ -1,37 +1,43 @@
+function path_smoothing
+    clc;
 
-clc;
+    clear variables;
+    load ../mat_files/checkpoints.mat;
+    load ../mat_files/occupancyMatrix.mat;
+    global meters_from_MAP
+    load ../mat_files/mapInformation.mat;
+    load('../mat_files/run_points.mat', 'run_points');
 
-close all;
-clear variables;
-load ../mat_files/run_points.mat;
-load ../mat_files/occupancyMatrix.mat;
-global meters_from_MAP
-load ../mat_files/mapInformation.mat;
-checkpoints = [373 209;480 1010; 446 1337; 840 1195];
+    run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
+    [change_points, cluster, threshold, cluster_boundaries] = pathSegmentation(run_points, checkpoints);
+
+    smoothed_path = spline_clusters(cluster_boundaries, change_points, cluster, checkpoints);
+    smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
+    %save('../mat_files/smoothed_path.mat', 'smoothed_path');
+
+    global fixed_sample_rate
+    fixed_sample_rate = 1 ; % meters
+
+    figure('WindowStyle', 'docked');clf;
+    hold all;
+    %plot(checkpoints(:,1), checkpoints(:,2), 'g*')
+    plot(run_points(:,1), run_points(:,2), 'r');
+    plot(smoothed_path(:,1), smoothed_path(:,2), 'b--');
+    title("Our way");
+    axis equal
+
+    sampled_path = resamplePath(smoothed_path);
+    save('../mat_files/sampled10_path.mat');
+    plot(sampled_path(:,1), sampled_path(:,2), 'g.');
+    legend('Dijsktra Path',...
+        'Smoothed Path',...
+        "Fixed Rate at "+num2str(fixed_sample_rate)+" m",...
+        'Location', 'Best','AutoUpdate','off');
 
 
-run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
-[change_points, cluster, threshold, cluster_boundaries] = pathSegmentation(run_points, checkpoints);
-
-smoothed_path = spline_clusters(cluster_boundaries, change_points, cluster, checkpoints);
-smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
-%save('../mat_files/smoothed_path.mat', 'smoothed_path');
-
-figure;
-hold all;
-%plot(checkpoints(:,1), checkpoints(:,2), 'g*')
-plot(run_points(:,1), run_points(:,2), 'r');
-plot(smoothed_path(:,1), smoothed_path(:,2), 'b-o');
-legend('Dijsktra Path', 'Smoothed Path', ...
-    'Location', 'Best');
-title("Our way");
-axis equal
-
-
-sampled_path = resamplePath(smoothed_path);
-save('../mat_files/sampled10_path.mat', 'sampled_path');
-plot(sampled_path(:,1), sampled_path(:,2), 'g*');
-hold off;
+    place_car(sampled_path,10);
+    axis equal
+end
 
 function run_points = insert_checkpoints_in_runPoints(run_points, checkpoints)
     for i_check = 2:length(checkpoints)-1
@@ -102,19 +108,18 @@ function  [change_points, cluster, threshold, cluster_boundaries] = pathSegmenta
     cluster_boundaries = [cluster_boundaries; ( (change_points(i,:) + change_points(i+1,:)) / 2 ) ];
     cluster_boundaries(end,:) =  checkpoints(end,:); %Ending with the final path point
     
-    figure();
+    figure('WindowStyle', 'docked');clf;
     plot(run_points(:, 1), run_points(:, 2), 'b');
     hold on
     gscatter(change_points(:, 1), change_points(:, 2), cluster);
     %plot(change_points(:, 1), change_points(:, 2) )
-    hold on
     plot(cluster_boundaries(:, 1), cluster_boundaries(:, 2), '*' );
     axis equal
 end
 
 function resampled_path = resamplePath(smoothed_path)
-    global meters_from_MAP;
-    sampling_dist = 0.2/meters_from_MAP;
+    global meters_from_MAP fixed_sample_rate
+    sampling_dist = fixed_sample_rate/meters_from_MAP;
     current_distance = 0;
     resampled_path = smoothed_path(1,:);
     checkpoint = smoothed_path(1,:);
