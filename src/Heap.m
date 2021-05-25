@@ -27,7 +27,8 @@ classdef Heap < handle
                 Heap.ZeroCapacityError();
             end
             this.n = n;
-            T = arrayfun(@(~) struct('cost',[],'distance',[],'index',[],'previous',[],'velocity',[]), 1:n, 'UniformOutput',false);
+            T = arrayfun(@(~) struct('cost',[],'distance',[],'index',[],'previous',[],...
+                'linear_velocity',[],'angular_velocity',[]), 1:n, 'UniformOutput',false);
             this.x = horzcat(T{:});
             clear T
             

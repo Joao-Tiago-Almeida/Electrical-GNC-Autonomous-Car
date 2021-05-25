@@ -13,10 +13,11 @@ function place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
     % duty_cicle : frequency of cars to display
     % theta_vect: vector of the car's angle
     % phi_vect: vector of the steering wheel's angle
+    global file_path
     
     if(nargin<3)
-        MAP_info = load('../mat_files/mapInformation.mat');
-        meter_per_pixel = MAP_info.meters_from_MAP;
+        map_information = load(string(file_path + "map_information.mat"), 'meters_from_MAP');
+        meter_per_pixel = map_information.meters_from_MAP;
         a = diff(points);
         a = [a; a(end, :)];
         theta_vect = atan2(a(:, 2),a(:,1));
