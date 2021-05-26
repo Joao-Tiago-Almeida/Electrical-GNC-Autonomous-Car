@@ -31,6 +31,6 @@ x_lidar = [0 range_1_x range_2_x range_3_x range_4_x range_5_x range_6_x range_7
 y_lidar = [0 range_1_y range_2_y range_3_y range_4_y range_5_y range_6_y range_7_y ...
           range_8_y range_9_y range_10_y range_11_y]*0.2; %range_12_y ...
           % range_13_y range_14_y range_15_y range_16_y]*0.2 ;
-figure(8);
-plot(x_lidar,y_lidar,'ro');
+% figure(8);
+% plot(x_lidar,y_lidar,'ro');
 end

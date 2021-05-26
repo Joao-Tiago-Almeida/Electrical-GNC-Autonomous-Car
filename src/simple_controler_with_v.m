@@ -38,13 +38,13 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, wet
         v = 0;
     elseif cwalk
         v = 1;
-    elseif abs(dtheta) < 1e-4
-        if dx
+    elseif abs(dtheta) < 1e-2
+        if dx > 1e-6
             v = 10*dx/cos(theta);
         else
             v = 10*dy/sin(theta);
         end
-    elseif abs(dtheta) < 1e-3
+    elseif abs(dtheta) < 0.1
         v = 3;
     elseif abs(theta) < 0.2
         v = 2;

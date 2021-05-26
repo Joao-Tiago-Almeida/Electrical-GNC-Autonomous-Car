@@ -11,7 +11,8 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
 
     %% Energy
 
-    E = 1.378*10^8;
+    %E = 1.378*10^8;
+    E=Inf;
     delta_energy=0;
     M = 810;
     delta_t = 0.1;
@@ -80,8 +81,9 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
 
     u = [y_theory(1)*(10^(-6))*((rand(1,1) > 0.5)*2 - 1);y_theory(2)*(10^(-7))*((rand(1,1) > 0.5)*2 - 1)];
     % remove if NaN
-     u(isnan(u)) = 0;
-    y = y_theory +u - y_hat ;
+    u(isnan(u)) = 0;
+    y = y_theory + u - y_hat ;
+    %y = y_theory - y_hat ;
     K = P*H'/(H*P*H' + H*Q*H');
     %% Position Gaussian error
     x_pos = [x_new;y_new;theta_new];

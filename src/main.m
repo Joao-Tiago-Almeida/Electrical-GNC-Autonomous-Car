@@ -29,7 +29,8 @@ thetat = theta_generator(xt,yt);
 %% Initialization
 
 % Initialize timer
-start(my_timer);stp = 0.0130;
+start(my_timer);
+stp = 0.02;
 
 % Initialize Car Exact Position and Old GPS position
 x = xt(1);y = yt(1);theta = thetat(1);
@@ -90,15 +91,21 @@ GPS_Breakups = [randi([1 size(xt,2)],1,1),randi([1 size(xt,2)],1,1),...
                 randi([1 size(xt,2)],1,1)];
     
 %% Run the Autonomous Car Program
+MAP_real_time = load(string(file_path+"MAP.mat"),'MAP');
+MAP_real_time.MAP.Name = "O puto tá aí nos drifts -> piu piu";
+hold on
+plot(sampled_path(:,1),sampled_path(:,2),"y--");
+
+tic
 while ~fin
     Flag_GPS_Breakup = 0;
     if start_v == 1
         % Measure the distance to tranjectory
-        [point, distance, thetap] = dist_to_traj(x_new, y_new, xt, yt, thetat, v, stp);
-        dist_to_p(t+1) = distance
-        if distance > 0.9
-            debug = 1;
-            break;
+        [point, distance, thetap, wait_time] = dist_to_traj(x_new, y_new, xt, yt, thetat, v, stp);
+        dist_to_p(t+1) = distance;
+        if distance > 2
+            debug = 1
+            %break;
         end
         % If the energy is zero, then stop the car
         
@@ -110,12 +117,16 @@ while ~fin
         
         %% alteração com a branco e a r
         if flag_Inerent_collision
-            disp("nabos")
+            disp("colisão da rita a falhar")
+        end
+        
+        if t==1805
+            debug = 1;
         end
         
         % Controller of the Car
         
-        [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new, theta_new, phi, v, wrapToPi(thetap)-wrapToPi(theta_new), wet, stopt);
+        [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new, wrapToPi(theta_new), phi, v, difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), wet, stopt);
         v_aux = v;
 
         % Car simulator
@@ -169,13 +180,17 @@ while ~fin
         if( norm([x-xt(end),y-yt(end)]) < 0.3)
             fin = 1;
         end
+    end    
+    try
+        delete(plt)
+    catch
     end
+    plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
     
-    
-    
-    
-    
+    pause(0.075);
 end
+toc
+
 %% For the Plot of GPS_Breakups
 
 X_breakups = [xnewp(GPS_Breakups(1));xnewp(GPS_Breakups(2));xnewp(GPS_Breakups(3)); ...
@@ -188,8 +203,11 @@ Y_breakups = [xnewp(GPS_Breakups(1));xnewp(GPS_Breakups(2));xnewp(GPS_Breakups(3
 
 stop(my_timer);
 delete(timerfindall)
-clear my_timer                
-figure()
+clear my_timer       
+
+
+%% 
+figure('WindowStyle', 'docked');
 plot(xp,yp,'b'); hold on;
 plot(xt,yt,'y'); axis equal;
 plot(error_odom(1,:),error_odom(2,:),'r');
@@ -201,8 +219,9 @@ ylabel('y (m)','FontSize',12,'FontName','Arial');
 xlabel('x (m)','FontSize',12,'FontName','Arial');
 legend('Actual Car Path','Car Initial Path','Odometry','Position Prediction','GPS BreakUp Points');
 legend show;
+
 % Error Plot
-figure
+figure('WindowStyle', 'docked');
 plot(dist_to_p);
 title('Error of Path','FontSize',14,'FontName','Arial');
 ylabel('Error','FontSize',12,'FontName','Arial');
@@ -211,7 +230,9 @@ xlabel('iterations','FontSize',12,'FontName','Arial');
 %%
 MAP_control = load(string(file_path+"MAP.mat"),'MAP');
 MAP_control.MAP.Name = 'control';
-place_car([xp',yp']/map_information.meters_from_MAP,1,thetapt,phip,map_information.meters_from_MAP);
+hold on
+place_car([xp',yp']/map_information.meters_from_MAP,3,thetapt,phip,map_information.meters_from_MAP);
+plot(sampled_path(:,1),sampled_path(:,2),"y--");
 
 %%
 function my_start_fcn(obj, event)

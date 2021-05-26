@@ -1,4 +1,4 @@
-function [point, dist, theta] = dist_to_traj(posx, posy, trajx, trajy, trajt, v, stp)
+function [point, dist, theta, passe] = dist_to_traj(posx, posy, trajx, trajy, trajt, v, stp)
     point = [0,0];
     dist = Inf;
     theta = 0;

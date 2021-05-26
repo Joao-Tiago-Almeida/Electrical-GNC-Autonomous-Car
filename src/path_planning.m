@@ -25,7 +25,7 @@ function [sampled_path, checkpoints] = path_planning(path_points)
     if(isempty(path_points)); load(string(file_path+"path_points.mat"),'path_points'); end
     
     safe_matrix = draw_safe_matrix;
-    gap_between_cells = 5;
+    gap_between_cells = 4;
     compute_map_grid(path_points);
 
     % convert the points in the occupancy matrix in the grid
@@ -461,7 +461,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     max_value=255;
     normalize = max_value/max(max(Ch));
     safe_matrix = round(Ch*normalize .* occupancy_matrix);
-    safe_matrix(safe_matrix<max_value/2)=0;
+    safe_matrix(safe_matrix<3*max_value/4)=0;   
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
     if(~debug_mode);return;end

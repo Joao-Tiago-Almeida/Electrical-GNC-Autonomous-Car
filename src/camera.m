@@ -16,7 +16,7 @@ x_camera = [range_1_x range_2_x range_3_x range_4_x range_5_x range_6_x range_7_
 y_camera = [range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y  ...
            range_11_y range_11_y range_11_y range_11_y];
 
-figure(9);
-plot(x_camera,y_camera,'g+');
+% figure(9);
+% plot(x_camera,y_camera,'g+');
 
 end
