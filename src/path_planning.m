@@ -1,4 +1,4 @@
-function [smoothed_path, checkpoints] = path_planning(path_points)
+function [sampled_path, checkpoints] = path_planning(path_points)
 % This function is responsabile to planning a path taking in account the
 % points {start, middle, stop}. It uses an dynamical weight dijkstra
 % algorithm. This version migth computes two different path in order to
@@ -14,7 +14,7 @@ function [smoothed_path, checkpoints] = path_planning(path_points)
         debug_mode file_path
     
     % to be returned
-    smoothed_path = [];
+    sampled_path = [];
     checkpoints = [];
     
     % a path need 2 points
@@ -135,13 +135,13 @@ function [smoothed_path, checkpoints] = path_planning(path_points)
     fig = uifigure;
     d=uiprogressdlg(fig,'Title','Smoothing the Path','Indeterminate','on');
     drawnow
-    smoothed_path = path_smoothing(run_points,checkpoints,map_information.meters_from_MAP);
+    sampled_path = path_smoothing(run_points,checkpoints,map_information.meters_from_MAP);
     close(d);close(fig);
     
     
     %% Final plots and verifications
     if(debug_mode)
-        inspect_plots(smoothed_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
+        inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
         disp("[EOF] Path Planning")
         license('inuse')
         %[fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');
@@ -150,7 +150,7 @@ function [smoothed_path, checkpoints] = path_planning(path_points)
 end
 
 %% Visual Support Content
-function inspect_plots(smoothed_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
+function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
 % This functions displays in figures the path planned
     
     global map_information file_path
@@ -190,8 +190,8 @@ function inspect_plots(smoothed_path, run_points, checkpoints, path_data, n_poin
     end
 
     figure('WindowStyle', 'docked');
-    lat = map_information.fget_Lat_from_MAP(smoothed_path(:,2));
-    lon = map_information.fget_Lon_from_MAP(smoothed_path(:,1));
+    lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
+    lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
     geoplot(lat,lon,'g-*')
 
     %% Web map
