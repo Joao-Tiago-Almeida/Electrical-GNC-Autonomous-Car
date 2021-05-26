@@ -1,4 +1,4 @@
-function [sampled_path, checkpoints] = path_planning(path_points)
+function [sampled_path, checkpoints] = path_planning(path_points, path_orientation)
 % This function is responsabile to planning a path taking in account the
 % points {start, middle, stop}. It uses an dynamical weight dijkstra
 % algorithm. This version migth computes two different path in order to
@@ -12,13 +12,17 @@ function [sampled_path, checkpoints] = path_planning(path_points)
         m_occupancy m_safe  ...
         node_location heap directions ...
         debug_mode file_path
+    global path_points path_orientation
     
     % to be returned
     sampled_path = [];
     checkpoints = [];
     
     % a path need 2 points
-    if(size(path_points,1)<2); return; end
+    if(size(path_points,1)<2 && length(path_orientations)==2 )
+        disp("2 points with 2D coordinates and orientation are needed ")
+        return;
+    end
   
     if(isempty(occupancy_matrix)); load(string(file_path+"occupancy_matrix.mat"), 'occupancy_matrix'); end
     if(isempty(map_information)); map_information=load(string(file_path+"mapInformation.mat")); end
@@ -58,12 +62,14 @@ function [sampled_path, checkpoints] = path_planning(path_points)
 
     %% DYNAMIC DIJKSTRA - Path planning
     %https://media.neliti.com/media/publications/165891-EN-shortest-path-with-dynamic-weight-implem.pdf
-
+    
+    orientation = round_thetas(path_orientation*0+[90;0]); % initial and final orientation -- path_orientation
+    
     sub_path = [];  % last confirmed path but it migth not occured if the stop point has to be deleted 
     path_data = []; % accumulated path with start and stop points confirmed
     prev_node=[];   % information about the start point 
     prev_prev_node=[];  % information about the start point before
-    i=1;
+    i=4;
     valid_points = 1:size(points_grid,1);
     wb=waitbar(0,"Planning The Best Path");
     wb.Position(1)= wb.Position(1)-wb.Position(3);
@@ -73,9 +79,18 @@ function [sampled_path, checkpoints] = path_planning(path_points)
         idx_start = yx_2_idx_graph(start(2),start(1));
         stop = points_grid(valid_points(i+1),:);
         idx_stop = yx_2_idx_graph(stop(2),stop(1));
+        
+        % define the orientation for final point at the last path
+        orientation_path = orientation;  % auxilar vect of orentations (for each sub path)
+        if(i~=(length(valid_points)-1))
+            orientation_path(2) = "";
+        end
+        if(i~=1)
+            orientation_path(1) = "";
+        end
 
-        wb=waitbar((i-1)/length(valid_points),wb,"Planning sub Path "+num2str(i));
-        dijkstra(idx_start,idx_stop,prev_node,"time");
+        wb=waitbar((i-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(i));
+        dijkstra(idx_start,idx_stop,prev_node,"time",orientation_path);
 
         if(isempty(node_location(idx_stop).cost))
             valid_points(i)=[];
@@ -202,7 +217,7 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
 end
 
 %% Auxiliar functions to Path Planning
-function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
+function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
 % Dynamical Weight Dijkstra where it is computed a path between two pixels,
 % given priority two straight movement.
 % It writes in the variable node_location the reachable points, and the
@@ -215,7 +230,7 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
 
     % Starting from the initial point
     if(isempty(init_node))
-        heap.InsertKey(new_node(0,0,idx_start,'',0,0))
+        heap.InsertKey(new_node(0,0,idx_start,"",0,0))
     else
         heap.InsertKey(init_node);
     end
@@ -233,9 +248,15 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
         
         % Confirm if the end point was reached
         if(idx_finish==node.index)
-            %disp("Computed points: "+num2str(sum(in_heap==-1)))
-            delete(wb);
-            return
+            % final node
+            if(strlength(orientation(2))>0) 
+               % speacific orientation at the final point
+               in_heap(node.index) = 0;
+            else
+                %disp("Computed points: "+num2str(sum(in_heap==-1)))
+                delete(wb);
+                return
+            end
         end
         waitbar(1-norm(idx_graph_2_xy(node.index)-idx_graph_2_xy(idx_finish))/...
             (norm(idx_graph_2_xy(idx_start)-idx_graph_2_xy(idx_finish))),...
@@ -259,7 +280,25 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium)
             
             % Define the new atempt
             node_aux = new_node(cost,distance,new_idx,direction,linear_velocity,angular_velocity);
-                
+            
+            %% Confirmation of the orientation
+            
+            % The first point has its speacific orientation
+            if ((node.index==idx_start) && (strlength(orientation(1))>0) && (direction ~= orientation(1)));
+                continue;
+            end
+            
+            % If the last point is reached, there is only one option to get there
+            if((idx_finish==new_idx))% && (direction == orientation(2)))                
+                disp("hey")
+%                 node_location(idx_finish)=node_aux;
+%                 in_heap(idx_finish) = -1;
+%                 delete(wb);
+%                 return
+            end
+            
+            %% Insert node at the heap
+            
             % The node is new to the heap
             if(in_heap(node_aux.index) == 0)
                 heap.InsertKey(node_aux);
@@ -387,6 +426,27 @@ function [linear_velocity,angular_velocity] = compute_velocity(start_dir,end_dir
     
     % weights traffic light ans stop zones
     linear_velocity = linear_velocity*(1-m_occupancy(1+gap_between_cells*(end_pos(2)-1),1+gap_between_cells*(end_pos(1)-1)));
+end
+
+function thetas_names = round_thetas(thetas)
+    global directions
+    
+    % avoid dimension errors
+    thetas = reshape(thetas,2,1);
+    
+    % normalize to one circle
+    thetas360 = wrapTo360(thetas);
+    
+    % round to the available dijkstra directions
+    rounded_thetas = rem(round(thetas360/45),8)+1;
+    
+    % map between the nomation of the dijkstra and the coordantion
+    % common knowledge
+    map_coord = [3 2 1 8 7 6 5 4];
+    
+    thetas_dijkstra = rem(find(map_coord'==rounded_thetas'),8);
+    
+    thetas_names = directions.names(thetas_dijkstra);
 end
 
 function s = new_node(c,d,i,p,lv,av)
