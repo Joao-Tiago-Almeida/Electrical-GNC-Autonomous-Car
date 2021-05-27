@@ -19,7 +19,7 @@ function [sampled_path, checkpoints] = path_planning%(path_points, path_orientat
     checkpoints = [];
     
     % a path need 2 points
-    if(size(path_points,1)<2 && length(path_orientations)==2 )
+    if(size(path_points,1)<2 && length(path_orientation)==2 )
         disp("2 points with 2D coordinates and orientation are needed ")
         return;
     end
@@ -69,46 +69,62 @@ function [sampled_path, checkpoints] = path_planning%(path_points, path_orientat
     path_data = []; % accumulated path with start and stop points confirmed
     prev_node=[];   % information about the start point 
     prev_prev_node=[];  % information about the start point before
-    i=4;
+    itr=1;
     valid_points = 1:size(points_grid,1);
+    n_max_points = length(valid_points);
     wb=waitbar(0,"Planning The Best Path");
     wb.Position(1)= wb.Position(1)-wb.Position(3);
     tic
-    while(i<length(valid_points))
-        start = points_grid(valid_points(i),:);
+    while(itr<n_max_points)
+        
+        start = points_grid(valid_points(itr),:);
         idx_start = yx_2_idx_graph(start(2),start(1));
-        stop = points_grid(valid_points(i+1),:);
+        stop = points_grid(valid_points(itr+1),:);
         idx_stop = yx_2_idx_graph(stop(2),stop(1));
         
         % define the orientation for final point at the last path
-        orientation_path = orientation;  % auxilar vect of orentations (for each sub path)
-        if(i~=(length(valid_points)-1))
-            orientation_path(2) = "";
+        orientation_path = ["",""];  % auxilar vect of orentations (for each sub path)\
+        % first point of the user chosen track
+        if(itr==1)
+            orientation_path(1) = orientation(1);
         end
-        if(i~=1)
-            orientation_path(1) = "";
+        if(itr==n_max_points-1)
+            orientation_path(2) = orientation(2);
+            removes_non_desired_neighbours(orientation);
         end
-
-        wb=waitbar((i-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(i));
-        dijkstra(idx_start,idx_stop,prev_node,"time",orientation_path);
+        
+        % performs dijkstra if the checkpoints are safe to drive
+        if( safe_matrix(1+gap_between_cells*(start(2)-1),1+gap_between_cells*(start(1)-1))>0 && ...
+            safe_matrix(1+gap_between_cells*(stop(2)-1),1+gap_between_cells*(stop(1)-1))>0 )
+        
+            wb=waitbar((itr-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(itr));
+            dijkstra(idx_start,idx_stop,prev_node,"time",orientation_path);
+        end
 
         if(isempty(node_location(idx_stop).cost))
-            valid_points(i)=[];
-            i=i-1;
+            valid_points(itr)=[];
+            itr=itr-1;
             prev_node = prev_prev_node;
             sub_path = [];
             disp("Invalid Subpath")
+            
+            % cannot start the path
+            if(itr==0)
+                disp("Invalid Subpath");
+                return
+            end
         else
             path_data = [path_data;sub_path];
             sub_path = get_path(idx_start,idx_stop);
             prev_prev_node = prev_node;
             prev_node = node_location(idx_stop);
-            i=i+1;
+            itr=itr+1;
         end
 
         node_location = horzcat(T{:});
         heap.Clear();
     end
+    
     toc
     delete(wb);
 
@@ -281,25 +297,8 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
             % Define the new atempt
             node_aux = new_node(cost,distance,new_idx,direction,linear_velocity,angular_velocity);
             
-            %% Confirmation of the orientation
-            
             % The first point has its speacific orientation
-            if ((node.index==idx_start) && (strlength(orientation(1))>0) && (direction ~= orientation(1)));
-                continue;
-            end
-            
-            % If the last point is reached, there is only one option to get there
-            if((idx_finish==new_idx) && (direction == orientation(2)))                
-                disp("hey")
-                node_location(idx_finish)=node_aux;
-                in_heap(idx_finish) = -1;
-                delete(wb);
-                return
-            end
-            
-            if(new_idx==9309)
-                disp("ola")
-            end
+            if ((node.index==idx_start) && (strlength(orientation(1))>0) && (direction ~= orientation(1))); continue; end
             
             %% Insert node at the heap
             
@@ -406,7 +405,7 @@ function cost = compute_cost(end_pos,linear_velocity,angular_velocity,distance,l
 end
 
 function [linear_velocity,angular_velocity] = compute_velocity(start_dir,end_dir,prev_linear_velocity,prev_angular_velocity,change_of_direction,end_pos)
-% Thsi function simulates the velocity towards the time taking into
+% This function simulates the velocity towards the time taking into
 % consideration changes in direction
 
     global m_occupancy gap_between_cells map_information
@@ -484,6 +483,24 @@ function s = new_node(c,d,i,p,lv,av)
         f_linear_velocity,v_linear_velocity,f_angular_velocity,v_angular_velocity);
 end
 
+function removes_non_desired_neighbours(orientation)
+% This function will disallow the car to reach a neighour that will not
+% imply the final orientation
+    global directions map_grid points_grid
+    
+    % final point
+    for i=1:8
+        [~,I_front] = max(strcmp(directions.names,orientation(2)));
+        if(-directions.idxs(I_front,:) == directions.idxs(i,:)); continue; end  % final orientation with oposite orientations
+        
+        % blocks with zero in the grid
+        step = directions.idxs(i,:);
+        neighbour = points_grid(end,:)+step;
+        map_grid(neighbour(2),neighbour(1)) = 0;
+    end
+    
+end
+
 %% Safetiness Matrix
 function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 % This function computes the safetiness matrix where it weights the
@@ -492,8 +509,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path
     
     if nargin < 1
-        safe_distance = 2.5;    % meters
-        forbidden_zone = 1.7;  % meters
+        safe_distance = 3.5;    % meters
+        forbidden_zone = 2;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
