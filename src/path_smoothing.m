@@ -194,7 +194,9 @@ function smoothed_path = spline_clusters(change_points, clusters, cluster_bounda
         
         %Creation of the knot vector t
         x = linspace(0, 1, length(all_cluster_points(:,1)) + degree);
-        y = gaussmf(x, [0.5 0.5]);
+        mu = 0.5;
+        sd = 0.5;
+        y = 1/(2*pi*sd)*exp(-(x-mu).^2/(2*sd^2));%gaussmf(x, [0.5 0.5]);
         knot_vector = cumsum(y)/max(cumsum(y));
         
         w = ones(1, length(all_cluster_points));

@@ -1,7 +1,7 @@
 clear all;
 close all;
 clc;
-load rafa_nabo.mat
+% load rafa_nabo.mat
 %% Guidance
 % global debug_mode path_points map_information occupancy_matrix file_path
 % 
@@ -230,6 +230,8 @@ MAP_control.MAP.Name = 'control';
 hold on
 place_car([xp',yp']/map_information.meters_from_MAP,3,thetapt,phip,map_information.meters_from_MAP);
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
+license('inuse')
+[fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');
 
 %%
 function my_start_fcn(obj, event)
