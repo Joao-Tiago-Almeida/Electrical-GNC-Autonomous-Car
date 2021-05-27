@@ -8,7 +8,7 @@
 % 
 % place_car(run_points,15);
 
-function plt = place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
+function place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
     % points : vector of points where the will be displayed
     % duty_cicle : frequency of cars to display
     % theta_vect: vector of the car's angle
@@ -50,7 +50,7 @@ function plt = place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
     % new transformation
     duty_cicle = min(100,max(1,duty_cicle));
     n_cars = round(100/duty_cicle);
-    n_cars = 1:n_cars:size(points,1);
+    n_cars = 1:n_cars:length(points);
     
     for c = n_cars
         X = points(c,1);
@@ -74,14 +74,14 @@ function plt = place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
 
         markers_size = 7;
 
-        plt = plot(t_center(1),t_center(2),'c+',...
-                    t_center(1),t_center(2),'gs',...
-                    t_corners(:,1),t_corners(:,2),'b-',...
-                    t_wheals(:,1),t_wheals(:,2),'k--o',...
-                    t_wheals(:,1),t_wheals(:,2),'r*',...
-                    t_front_wheel(1,1),t_front_wheel(1,2),'ko',...
-                    [t_front_wheel(1,1), t_front_wheel(1,1)+t_front_wheel(2,1)],...
-                    [t_front_wheel(1,2), t_front_wheel(1,2)+t_front_wheel(2,2)],'m-*',"MarkerSize",markers_size);
+        plot(t_center(1),t_center(2),'c+',"MarkerSize",markers_size)
+        plot(t_center(1),t_center(2),'gs',"MarkerSize",markers_size)
+        plot(t_corners(:,1),t_corners(:,2),'b-')
+        plot(t_wheals(:,1),t_wheals(:,2),'k--o',"MarkerSize",markers_size)
+        plot(t_wheals(:,1),t_wheals(:,2),'r*',"MarkerSize",markers_size)
+        plot(t_front_wheel(1,1),t_front_wheel(1,2),'ko',"MarkerSize",markers_size)
+        plot([t_front_wheel(1,1), t_front_wheel(1,1)+t_front_wheel(2,1)],...
+        [t_front_wheel(1,2), t_front_wheel(1,2)+t_front_wheel(2,2)],'m-*',"MarkerSize",markers_size-2)
 
 
     end

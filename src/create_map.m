@@ -396,7 +396,7 @@ function create_map()
 
     function trafficLight = drawTrafficLight
         disp("Draw in the map one traffic light by drawing the region");
-        h = drawpolygon('Color','g','InteractionsAllowed','none');
+        h = drawpolygon('Color','g,','InteractionsAllowed','none');
 
         h.Color = 'green';
         h.FaceAlpha = 0.1;
