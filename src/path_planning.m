@@ -1,4 +1,4 @@
-function [sampled_path, checkpoints] = path_planning(path_points, path_orientation)
+function [sampled_path, checkpoints] = path_planning%(path_points, path_orientation)
 % This function is responsabile to planning a path taking in account the
 % points {start, middle, stop}. It uses an dynamical weight dijkstra
 % algorithm. This version migth computes two different path in order to
@@ -63,7 +63,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     %% DYNAMIC DIJKSTRA - Path planning
     %https://media.neliti.com/media/publications/165891-EN-shortest-path-with-dynamic-weight-implem.pdf
     
-    orientation = round_thetas(path_orientation*0+[90;0]); % initial and final orientation -- path_orientation
+    orientation = round_thetas(path_orientation); % initial and final orientation -- path_orientation
     
     sub_path = [];  % last confirmed path but it migth not occured if the stop point has to be deleted 
     path_data = []; % accumulated path with start and stop points confirmed
@@ -289,12 +289,16 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
             end
             
             % If the last point is reached, there is only one option to get there
-            if((idx_finish==new_idx))% && (direction == orientation(2)))                
+            if((idx_finish==new_idx) && (direction == orientation(2)))                
                 disp("hey")
-%                 node_location(idx_finish)=node_aux;
-%                 in_heap(idx_finish) = -1;
-%                 delete(wb);
-%                 return
+                node_location(idx_finish)=node_aux;
+                in_heap(idx_finish) = -1;
+                delete(wb);
+                return
+            end
+            
+            if(new_idx==9309)
+                disp("ola")
             end
             
             %% Insert node at the heap

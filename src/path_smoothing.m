@@ -8,7 +8,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     smoothed_path = spline_clusters(change_points, cluster, cluster_boundaries, checkpoints);
     smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
     
-    fixed_sample_rate = 0.5; % meters
+    fixed_sample_rate = 0.02; % meters
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
     
@@ -194,7 +194,9 @@ function smoothed_path = spline_clusters(change_points, clusters, cluster_bounda
         
         %Creation of the knot vector t
         x = linspace(0, 1, length(all_cluster_points(:,1)) + degree);
-        y = gaussmf(x, [0.5 0.5]);
+        mu = 0.5;
+        sd = 0.5;
+        y = 1/(2*pi*sd)*exp(-(x-mu).^2/(2*sd^2));%gaussmf(x, [0.5 0.5]);
         knot_vector = cumsum(y)/max(cumsum(y));
         
         w = ones(1, length(all_cluster_points));
