@@ -71,9 +71,9 @@ load 'Initialize_Sensors.mat';
 load 'Initialize_Sensors_flags.mat';
 
 % Create lidar
-[x_lidar,y_lidar]= lidar();
+[x_lidar,y_lidar]= lidar;
 % Create camera
-[x_camera,y_camera]= camera();
+[x_camera,y_camera]= camera;
 count = 1;
 index_pessoa=0;
 
@@ -181,10 +181,7 @@ while ~fin
             fin = 1;
         end
     end    
-    try
-        delete(plt)
-    catch
-    end
+    if(t>1); delete(plt); end
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
     
     pause(0.075);
