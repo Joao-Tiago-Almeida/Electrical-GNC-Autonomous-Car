@@ -2,7 +2,7 @@
 
 % STARTING FUNCTION to create map, new roads and new path points
 function create_map()
-    global occupancy_matrix map_information path_points file_path
+    global occupancy_matrix map_information path_points file_path energy_budget path_orientation
     path_img = "../maps/IST_campus.png"; %default map image path
     file_path = "../maps/IST_campus/";
     try
@@ -58,6 +58,8 @@ function create_map()
                 end
             end
         end
+        energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'0'}));
+        if energy_budget < 0; energy_budget = 0; end
         break;
     end
     % TODO sรณ entrar aqui quando o file_path nรฃo for empty
@@ -84,7 +86,15 @@ function create_map()
 
         %% set MAP scale
         if newMapInfo == true
-            MAP_info = scale_map(folder_path);
+            %Check if image is a real image that we can get meters_from_map
+            %with coords or just type a meter_from_map ratio for a non real
+            %image
+            user_option_img_type = questdlg("Is your image just a simple sketch(No need to input coordinates to get a meters-to-pixel ratio)? Or is it a real map(realistic meters-to-pixel conversion)?  ' ", 'confirmation', 'Sketch', 'Real Map', 'Real Map');
+            if(strcmpi(user_option_img_type, 'Real Map'))
+                MAP_info = scale_map(folder_path);
+            else
+                MAP_info.meters_from_MAP =  str2double(inputdlg('So how much meters should a pixel be in the image? (eg. typing 0.17 means 17cm for each image pixel','Meters to Pixel Conversion',[1 40], {'0.1'}));
+            end
         else
             MAP_info = load(string(folder_path + "map_information.mat"));
         end
@@ -205,9 +215,11 @@ function create_map()
                 h1 = drawpoint('LineWidth',1, 'Color','k');
             end
 
-            prompt = {'Latitude:', 'Longitude:'};
+            prompt = {'Latitude[-90บ ; 90บ]:', 'Longitude:'};
             point1coords = str2double(inputdlg(prompt,'Coordinates - Point 1',[1 50], {'38.736798','-9.139866'}));
             lat1 = point1coords(1);
+            if(lat1 < -90); lat1 = -90; end % Latitudes have to be between -90บ and 90บ
+            if(lat1 > 90); lat1 = 90; end
             lon1 = point1coords(2);
 
             user_option = questdlg("If you're satisfied with the picked point enter 'Yes' to go pick the SECOND point ", 'confirmation', 'Yes', 'No', 'Undo', 'Yes');
@@ -229,9 +241,11 @@ function create_map()
                 h2 = drawpoint('LineWidth',1, 'Color','k');
             end
 
-            prompt = {'Latitude:', 'Longitude:'};
+            prompt = {'Latitude [-90บ ; 90บ]:', 'Longitude:'};
             point2coords = str2double(inputdlg(prompt,'Coordinates - Point 2',[1 50], {'38.736258','-9.137637'}));
             lat2 = point2coords(1);
+            if(lat2 < -90); lat1 = -90; end
+            if(lat2 > 90); lat1 = 90; end
             lon2 = point2coords(2);
 
             user_option = questdlg("If you're satisfied with the picked point enter 'Yes' ", 'confirmation', 'Yes', 'No', 'Undo', 'Yes');
@@ -294,9 +308,9 @@ function create_map()
             [~,I] = sort(dist); % closet neighbour
 
             % verify if the point is inside the road
-            for j = 1:length(I)
-                if(occupancy_matrix(best_corner(I(j),2), best_corner(I(j),1)) ~= 0)    % point inside the road
-                    points = [points;best_corner(I(j),:)];
+            for idj = 1:length(I)
+                if(occupancy_matrix(best_corner(I(idj),2), best_corner(I(idj),1)) ~= 0)    % point inside the road
+                    points = [points;best_corner(I(idj),:)];
                     allowed_points(idx) = 1;
                     break
                 end
@@ -317,9 +331,9 @@ function create_map()
         if nargin < 1
             load(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         end
-        msgbox("Pick in the map the INITIAL point, the intermediate points and the FINAL point","PICKING PATH POINTS", 'modal');
-
+        
         imshow(occupancy_matrix);
+        msgbox("Pick in the map the INITIAL point, the intermediate points and the FINAL point","PICKING PATH POINTS", 'modal');
 
         pathPoints = [];
         user_option = "No";
@@ -355,6 +369,13 @@ function create_map()
             h.FaceAlpha = 0.8;
         end
 
+        prompt = {'Orientation of Initial Point [0บ ; 360บ]:', 'Orientation of Ending Point [0บ ; 360บ]:'};
+        path_orientation = string(inputdlg(prompt,'Definition of Orientations',[1 50], {'0บ','0บ'}));
+        path_orientation(1) = strrep(path_orientation(1), "บ", "");
+        path_orientation(2) = strrep(path_orientation(2), "บ", "");
+        path_orientation = str2double(path_orientation);
+        path_orientation = wrapTo360(path_orientation)
+        
         save(string(folder_path + "path_points.mat"), 'pathPoints');
         Image = getframe(gcf);
         imwrite(Image.cdata, folder_path + "MAP_w_roads.png", 'png');
