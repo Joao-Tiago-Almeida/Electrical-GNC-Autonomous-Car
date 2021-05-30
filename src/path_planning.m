@@ -75,7 +75,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     wb=waitbar(0,"Planning The Best Path");
     wb.Position(1)= wb.Position(1)-wb.Position(3);
     tic
-    while(itr<n_max_points)
+    while(itr<length(valid_points))
         
         start = points_grid(valid_points(itr),:);
         idx_start = yx_2_idx_graph(start(2),start(1));
@@ -353,14 +353,16 @@ function reachable_neighbours = identify_reachable_neighbours(xy,previous_direct
 % any other circunstance, the car only of three choices: straight, left or
 % rigth diagonal (degrees).
 
-    global directions dx dy m_safe gap_between_cells
+    global directions dx dy m_safe gap_between_cells points map_grid
    
    points = xy+directions.idxs;
    in_boundaries = logical(sum((points<=[dx dy]).*(points>=1),2)==2);
    points(~in_boundaries,:) = 1;
    
    % reachable points 
-   reachable_neighbours = (1~=diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1)))).*in_boundaries;
+   reachable_neighbours = (1~=diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1))))... % inside map _grid
+                            .*diag(map_grid(points(:,2),points(:,1)))...    % inside map _grid
+                            .*in_boundaries;
    idxs = ones(1,8);
     if(previous_direction ~= '')
         % When the previous direcition is one of {N;E;S;W}, the next
@@ -449,6 +451,7 @@ function thetas_names = round_thetas(thetas)
     map_coord = [3 2 1 8 7 6 5 4];
     
     thetas_dijkstra = rem(find(map_coord'==rounded_thetas'),8);
+    thetas_dijkstra(thetas_dijkstra==0) = 8;
     
     thetas_names = directions.names(thetas_dijkstra);
 end
