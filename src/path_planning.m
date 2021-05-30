@@ -98,7 +98,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             safe_matrix(1+gap_between_cells*(stop(2)-1),1+gap_between_cells*(stop(1)-1))>0 )
         
             wb=waitbar((itr-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(itr));
-            dijkstra(idx_start,idx_stop,prev_node,"time",orientation_path);
+            dijkstra(idx_start,idx_stop,prev_node,"distance",orientation_path);
         end
 
         if(isempty(node_location(idx_stop).cost))
@@ -197,7 +197,7 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     colormap(jet);
     Image = getframe(gcf);
     imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
-    place_car(run_points,10)
+    place_car(run_points,10);
     
     
     figure('WindowStyle', 'docked');
@@ -514,7 +514,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     
     if nargin < 1
         safe_distance = 1;    % meters
-        forbidden_zone = 2;  % meters
+        forbidden_zone = 1.5;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
