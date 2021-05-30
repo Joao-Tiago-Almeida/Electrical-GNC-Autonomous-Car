@@ -159,7 +159,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     if(length(valid_points)<2);return;end
 
     %% validate checkpoints
-    checkpoints=points(valid_points,:);
+    checkpoints=path_points(valid_points,:);
     save(string(file_path+"checkpoints.mat"), 'checkpoints');    
     
     %% Path Smoothing
