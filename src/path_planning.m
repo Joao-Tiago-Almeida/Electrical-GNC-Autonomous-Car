@@ -360,7 +360,7 @@ function reachable_neighbours = identify_reachable_neighbours(xy,previous_direct
    points(~in_boundaries,:) = 1;
    
    % reachable points 
-   reachable_neighbours = (~logical(diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1))))).*in_boundaries;
+   reachable_neighbours = (1~=diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1)))).*in_boundaries;
    idxs = ones(1,8);
     if(previous_direction ~= '')
         % When the previous direcition is one of {N;E;S;W}, the next
@@ -510,7 +510,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path
     
     if nargin < 1
-        safe_distance = 3.5;    % meters
+        safe_distance = 1;    % meters
         forbidden_zone = 2;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
@@ -563,10 +563,10 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     mesh(disk,'EdgeColor', 'none','FaceColor', 'interp');
     light
     % lighting gouraud
-    title("Forbiden Zone - Convulution function");
+    title("Forbidden Zone - Convulotion function");
     xlabel("pixels")
     ylabel("pixels")
-    zlabel("weigth")
+    zlabel("weight")
     xlim([1 size(disk,1)])
     ylim([1 size(disk,2)])
     view(45,45)
@@ -575,10 +575,10 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     mesh(u,'EdgeColor', 'interp','FaceColor', 'interp');
     light
     % lighting gouraud
-    title("Safetiness gradient Zone - Convulution function");
+    title("Safetiness gradient Zone - Convolution function");
     xlabel("pixels")
     ylabel("pixels")
-    zlabel("weigth")
+    zlabel("weight")
     xlim([1 size(u,1)])
     ylim([1 size(u,2)])
     view(45,45)
