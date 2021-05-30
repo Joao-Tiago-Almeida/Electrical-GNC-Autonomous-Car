@@ -1,4 +1,4 @@
-function [sampled_path, checkpoints] = path_planning%(path_points, path_orientation)
+function [sampled_path, checkpoints] = path_planning(path_points, path_orientation)
 % This function is responsabile to planning a path taking in account the
 % points {start, middle, stop}. It uses an dynamical weight dijkstra
 % algorithm. This version migth computes two different path in order to
@@ -12,7 +12,7 @@ function [sampled_path, checkpoints] = path_planning%(path_points, path_orientat
         m_occupancy m_safe  ...
         node_location heap directions ...
         debug_mode file_path
-    global path_points path_orientation
+    %global path_points path_orientation
     
     % to be returned
     sampled_path = [];
@@ -353,13 +353,14 @@ function reachable_neighbours = identify_reachable_neighbours(xy,previous_direct
 % any other circunstance, the car only of three choices: straight, left or
 % rigth diagonal (degrees).
 
-    global directions map_grid dx dy
+    global directions dx dy m_safe gap_between_cells
    
    points = xy+directions.idxs;
    in_boundaries = logical(sum((points<=[dx dy]).*(points>=1),2)==2);
    points(~in_boundaries,:) = 1;
    
-   reachable_neighbours = diag(map_grid(points(:,2),points(:,1))).*in_boundaries;  % at this point it contains all 
+   % reachable points 
+   reachable_neighbours = (~logical(diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1))))).*in_boundaries;
    idxs = ones(1,8);
     if(previous_direction ~= '')
         % When the previous direcition is one of {N;E;S;W}, the next
@@ -523,60 +524,75 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 
     % function speacifications
     inf_limit = 1;
-    B = 1 - forbidden_pixels;
-    A = inf_limit/(log(safe_pixels+B));
+    A = inf_limit/(log(safe_pixels+1));
 
     %   evaluates the potential risk from to the forbidden zone
-    func_stable_region = @(x) A*log(x+B).*(forbidden_pixels<=x).*(x<=safe_pixels) + inf_limit*(x>=safe_pixels);
-
-    %   input vector to convulution
-    radius = ceil(safe_pixels);
-    v_up = 0:radius;
-    v = [v_up flip(v_up)];
-    [X,Y] = meshgrid(v,v);
-    u = func_stable_region(sqrt(2*(radius).^2) - sqrt((radius-X).^2+(radius-Y).^2));
+    func_stable_region = @(x)A*log(x+1).*(x<=safe_pixels) + inf_limit*(x>=safe_pixels);
     
+    %% draw the disk
+    radius = ceil(forbidden_pixels);
+    dist = 0:radius;
+    v = [dist(1:end-1) flip(dist)];
+    [X,Y] = meshgrid(v);
+    disk = ((radius).^2) > (radius-X).^2+(radius-Y).^2;
     
     %   evaluates the danger zones
-    Ch = conv2(occupancy_matrix, u, 'same');
-    max_value=255;
-    normalize = max_value/max(max(Ch));
-    safe_matrix = round(Ch*normalize .* occupancy_matrix);
-    safe_matrix(safe_matrix<max_value/2)=0;
+    Ch_disk = conv2(occupancy_matrix, disk, 'same');
+    safe_matrix_aux = round(Ch_disk .* logical(occupancy_matrix));
+    safe_matrix_aux = safe_matrix_aux/max(max(safe_matrix_aux));
+    safe_matrix_aux(safe_matrix_aux<1)=0;
+
+    %% input vector to convulution
+    radius = ceil(safe_pixels);
+    v_up = 0:radius;
+    v = [v_up(1:end-1) flip(v_up)];
+    [X,Y] = meshgrid(v);
+    u = func_stable_region(sqrt(2*(radius).^2) - sqrt((radius-X).^2+(radius-Y).^2));
+    
+    %   evaluates the safetiness of the road
+    Ch = conv2(safe_matrix_aux, u, 'same');
+    normalize = 255/max(max(Ch));
+    safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
     if(~debug_mode);return;end
     
     %% view
-    f1 = figure('WindowStyle', 'docked');
-    %f1.Position(4)=f1.Position(4)/2;
-    hold on
-    grid on
-    fplot(func_stable_region,"LineWidth",2);
-    title("Convulution function");
-    xlabel("meters")
-    ylabel("weigth")
-    xlim([0 length(v_up)])
-    ylim([0 inf_limit])
-    plot(v_up(1):length(v_up), func_stable_region(v_up(1):length(v_up)), 'ro',"MarkerSize",8);
-    xticklabels(num2cell(xticks*meters_from_MAP))
-
-    f2=figure('WindowStyle', 'docked');
-    mesh(u,'FaceColor', 'flat');
+    
+    f1=figure('WindowStyle', 'docked');
+    mesh(disk,'EdgeColor', 'none','FaceColor', 'interp');
     light
     % lighting gouraud
-    title("3D Convulution function");
+    title("Forbiden Zone - Convulution function");
     xlabel("pixels")
     ylabel("pixels")
     zlabel("weigth")
+    xlim([1 size(disk,1)])
+    ylim([1 size(disk,2)])
+    view(45,45)
 
-    f3=figure('WindowStyle', 'docked');
-    mesh(safe_matrix, 'EdgeColor', 'interp', 'FaceColor', 'flat');
+    f2=figure('WindowStyle', 'docked');
+    mesh(u,'EdgeColor', 'interp','FaceColor', 'interp');
+    light
+    % lighting gouraud
+    title("Safetiness gradient Zone - Convulution function");
+    xlabel("pixels")
+    ylabel("pixels")
+    zlabel("weigth")
+    xlim([1 size(u,1)])
+    ylim([1 size(u,2)])
+    view(45,45)
+
+    f3=figure('WindowStyle', 'docked'); hold on
+    merge_sf = [100*Ch_disk(round(1:end/3),:)/max(max(Ch_disk));...
+                145*safe_matrix_aux(1+round(end/3):round(2*end/3),:);...
+                safe_matrix(1+round(2*end/3):end,:)];
+    mesh(merge_sf, 'EdgeColor', 'interp', 'FaceColor', 'flat');
     axis equal
     axis tight
     axis manual
     view(90,-90)
-    title("Potential Danger Zones", "FontSize", 20, "FontName", "arial")
+    title("Safetiness Area", "FontSize", 20, "FontName", "arial")
     xlabel("pixels")
     ylabel("pixels")
     colormap jet
@@ -585,9 +601,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     cb.TickLabels=["Circuit Limitation","Safe Area"];
     cb.FontSize=14;
     cb.Location="South";
-    cb.Position(2)=0.18;
-    xlim([300 900])
-    ylim([100 1400])
+    cb.Position(2)=0.1;
 end
 
 %% Visibility Matrix
