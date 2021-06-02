@@ -1,14 +1,15 @@
 clear all;
 close all;
 clc;
-% load rafa_nabo.mat
 %% Guidance
-% global debug_mode path_points map_information occupancy_matrix file_path
-% 
-% debug_mode = true;
-% create_map
-% 
-% [sampled_path, checkpoints] = path_planning(path_points);
+
+global debug_mode path_points path_orientation
+
+debug_mode = true;
+create_map
+path_orientation=[0;0];%norte 90, sul -90; este 0graus; etc etc
+
+[sampled_path, checkpoints] = path_planning(path_points, path_orientation);
 
 %% Control and Navigation
 

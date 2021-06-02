@@ -8,7 +8,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     smoothed_path = spline_clusters(change_points, cluster, cluster_boundaries, checkpoints);
     smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
     
-    fixed_sample_rate = 0.02; % meters
+    fixed_sample_rate = 0.5; % meters
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
     
@@ -230,7 +230,7 @@ function resampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sa
     for current_point = 1:length(smoothed_path)-1
         current_distance = current_distance + ...
             vecnorm( smoothed_path(current_point,:) -  smoothed_path(current_point+1,:), 2, 2);   
-        
+            checkpoint = smoothed_path(current_point,:);
         while(current_distance > sampling_dist)
             %Get slope
             a = smoothed_path(current_point+1,:) - checkpoint;

@@ -6,14 +6,16 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
     %% Define variables to be used throughout the file
     global occupancy_matrix map_information...
-        map_grid points...
+        map_grid...
         points_grid gap_between_cells dx dy ...
         yx_2_idx_graph idx_graph_2_xy ...
         m_occupancy m_safe  ...
         node_location heap directions ...
-        debug_mode file_path
+        debug_mode file_path safe_debug;
     %global path_points path_orientation
     
+    safe_debug = false; % intermedium plots 
+   
     % to be returned
     sampled_path = [];
     checkpoints = [];
@@ -30,7 +32,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     safe_matrix = draw_safe_matrix;
     gap_between_cells = 5;
-    compute_map_grid(path_points);
+    points = compute_map_grid(path_points);
 
     % convert the points in the occupancy matrix in the grid
     points_grid(:,1) = (points(:,1)-1)/gap_between_cells+1;
@@ -75,7 +77,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     wb=waitbar(0,"Planning The Best Path");
     wb.Position(1)= wb.Position(1)-wb.Position(3);
     tic
-    while(itr<n_max_points)
+    while(itr<length(valid_points))
         
         start = points_grid(valid_points(itr),:);
         idx_start = yx_2_idx_graph(start(2),start(1));
@@ -98,7 +100,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             safe_matrix(1+gap_between_cells*(stop(2)-1),1+gap_between_cells*(stop(1)-1))>0 )
         
             wb=waitbar((itr-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(itr));
-            dijkstra(idx_start,idx_stop,prev_node,"time",orientation_path);
+            dijkstra(idx_start,idx_stop,prev_node,"distance",orientation_path);
         end
 
         if(isempty(node_location(idx_stop).cost))
@@ -159,7 +161,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     if(length(valid_points)<2);return;end
 
     %% validate checkpoints
-    checkpoints=points(valid_points,:);
+    checkpoints=path_points(valid_points,:);
     save(string(file_path+"checkpoints.mat"), 'checkpoints');    
     
     %% Path Smoothing
@@ -184,7 +186,7 @@ end
 function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
 % This functions displays in figures the path planned
     
-    global map_information file_path
+    global map_information file_path safe_debug
     MAP = load(string(file_path+"MAP.mat"),'MAP');
     MAP.MAP.Name = 'Path Planning Velocity';
     hold on
@@ -197,8 +199,9 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     colormap(jet);
     Image = getframe(gcf);
     imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
-    place_car(run_points,10)
+    place_car(run_points,10);
     
+    if(safe_debug); return; end
     
     figure('WindowStyle', 'docked');
     t=0:seconds(path_duration)/(n_points-1):seconds(path_duration)';
@@ -353,14 +356,16 @@ function reachable_neighbours = identify_reachable_neighbours(xy,previous_direct
 % any other circunstance, the car only of three choices: straight, left or
 % rigth diagonal (degrees).
 
-    global directions dx dy m_safe gap_between_cells
+    global directions dx dy m_safe gap_between_cells points map_grid
    
    points = xy+directions.idxs;
    in_boundaries = logical(sum((points<=[dx dy]).*(points>=1),2)==2);
    points(~in_boundaries,:) = 1;
    
    % reachable points 
-   reachable_neighbours = (1~=diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1)))).*in_boundaries;
+   reachable_neighbours = (1~=diag(m_safe(1+gap_between_cells*(points(:,2)-1),1+gap_between_cells*(points(:,1)-1))))... % inside map _grid
+                            .*diag(map_grid(points(:,2),points(:,1)))...    % inside map _grid
+                            .*in_boundaries;
    idxs = ones(1,8);
     if(previous_direction ~= '')
         % When the previous direcition is one of {N;E;S;W}, the next
@@ -449,6 +454,7 @@ function thetas_names = round_thetas(thetas)
     map_coord = [3 2 1 8 7 6 5 4];
     
     thetas_dijkstra = rem(find(map_coord'==rounded_thetas'),8);
+    thetas_dijkstra(thetas_dijkstra==0) = 8;
     
     thetas_names = directions.names(thetas_dijkstra);
 end
@@ -507,11 +513,11 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 % This function computes the safetiness matrix where it weights the
 % neighbourhood and classifies whether is safe to drive in that zone or not
 
-    global occupancy_matrix map_information debug_mode file_path
+    global occupancy_matrix map_information debug_mode file_path safe_debug
     
     if nargin < 1
         safe_distance = 1;    % meters
-        forbidden_zone = 2;  % meters
+        forbidden_zone = 1.5;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
@@ -555,7 +561,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
-    if(~debug_mode);return;end
+    if(~debug_mode && safe_debug);return;end
     
     %% view
     
@@ -605,18 +611,18 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 end
 
 %% Visibility Matrix
-function compute_map_grid(path_points)
+function points = compute_map_grid(path_points)
 % It is computed a visibility matrix from the occupancy grid where the gap
 % between the cells is the space of each division
 
-    global occupancy_matrix gap_between_cells points map_grid debug_mode file_path
+    global occupancy_matrix gap_between_cells map_grid debug_mode file_path
     [dim_y, dim_x] = size(occupancy_matrix);
 
     dx = 1:gap_between_cells:dim_x;
     dy = 1:gap_between_cells:dim_y;
     [X,Y] = meshgrid(dx,dy);
     map_grid = occupancy_matrix(dy,dx)~=0;
-    [points,~] = get_closest_point_in_grid(gap_between_cells,gap_between_cells,path_points,occupancy_matrix);
+    [points,~] = get_closest_point_in_grid(path_points);
     
     if(~debug_mode);return;end
     
@@ -642,22 +648,22 @@ function compute_map_grid(path_points)
     %f_aux.WindowStyle='docked';
 end
 
-function [points,allowed_points] = get_closest_point_in_grid(nx,ny,xy,occupancy_matrix)
+function [points,allowed_points] = get_closest_point_in_grid(xy)
 % Place the point selected by the user in the nearest point of the
 % visibility matrix
-    global file_path
+    global file_path gap_between_cells occupancy_matrix
     
     points = [];    %   vector of neighbours in the grid
     allowed_points = zeros(size(xy,1),1);     %   real points inside the matrix
     %   float numbers inside the square
-    rem_x = rem(xy(:,1),nx);
-    rem_y = rem(xy(:,2),ny);
+    rem_x = rem(xy(:,1),gap_between_cells);
+    rem_y = rem(xy(:,2),gap_between_cells);
     
     %   The four corners of the closest square
     upper_left_corner = [xy(:,1)-rem_x+1, xy(:,2)-rem_y+1];
-    upper_right_corner = [upper_left_corner(:,1)+nx, upper_left_corner(:,2)];
-    lower_left_corner = [upper_left_corner(:,1) upper_left_corner(:,2)+ny];
-    lower_right_corner = [upper_left_corner(:,1)+nx upper_left_corner(:,2)+ny];
+    upper_right_corner = [upper_left_corner(:,1)+gap_between_cells, upper_left_corner(:,2)];
+    lower_left_corner = [upper_left_corner(:,1) upper_left_corner(:,2)+gap_between_cells];
+    lower_right_corner = [upper_left_corner(:,1)+gap_between_cells upper_left_corner(:,2)+gap_between_cells];
     
     % iterate over the corners
     for idx = 1:size(upper_left_corner,1)
