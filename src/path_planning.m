@@ -6,14 +6,16 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
     %% Define variables to be used throughout the file
     global occupancy_matrix map_information...
-        map_grid points...
+        map_grid...
         points_grid gap_between_cells dx dy ...
         yx_2_idx_graph idx_graph_2_xy ...
         m_occupancy m_safe  ...
         node_location heap directions ...
-        debug_mode file_path
+        debug_mode file_path safe_debug;
     %global path_points path_orientation
     
+    safe_debug = false; % intermedium plots 
+   
     % to be returned
     sampled_path = [];
     checkpoints = [];
@@ -30,7 +32,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     safe_matrix = draw_safe_matrix;
     gap_between_cells = 5;
-    compute_map_grid(path_points);
+    points = compute_map_grid(path_points);
 
     % convert the points in the occupancy matrix in the grid
     points_grid(:,1) = (points(:,1)-1)/gap_between_cells+1;
@@ -184,7 +186,7 @@ end
 function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
 % This functions displays in figures the path planned
     
-    global map_information file_path
+    global map_information file_path safe_debug
     MAP = load(string(file_path+"MAP.mat"),'MAP');
     MAP.MAP.Name = 'Path Planning Velocity';
     hold on
@@ -199,6 +201,7 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
     place_car(run_points,10);
     
+    if(safe_debug); return; end
     
     figure('WindowStyle', 'docked');
     t=0:seconds(path_duration)/(n_points-1):seconds(path_duration)';
@@ -510,7 +513,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 % This function computes the safetiness matrix where it weights the
 % neighbourhood and classifies whether is safe to drive in that zone or not
 
-    global occupancy_matrix map_information debug_mode file_path
+    global occupancy_matrix map_information debug_mode file_path safe_debug
     
     if nargin < 1
         safe_distance = 1;    % meters
@@ -558,7 +561,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
-    if(~debug_mode);return;end
+    if(~debug_mode && safe_debug);return;end
     
     %% view
     
@@ -608,18 +611,18 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 end
 
 %% Visibility Matrix
-function compute_map_grid(path_points)
+function points = compute_map_grid(path_points)
 % It is computed a visibility matrix from the occupancy grid where the gap
 % between the cells is the space of each division
 
-    global occupancy_matrix gap_between_cells points map_grid debug_mode file_path
+    global occupancy_matrix gap_between_cells map_grid debug_mode file_path
     [dim_y, dim_x] = size(occupancy_matrix);
 
     dx = 1:gap_between_cells:dim_x;
     dy = 1:gap_between_cells:dim_y;
     [X,Y] = meshgrid(dx,dy);
     map_grid = occupancy_matrix(dy,dx)~=0;
-    [points,~] = get_closest_point_in_grid(gap_between_cells,gap_between_cells,path_points,occupancy_matrix);
+    [points,~] = get_closest_point_in_grid(path_points);
     
     if(~debug_mode);return;end
     
@@ -645,22 +648,22 @@ function compute_map_grid(path_points)
     %f_aux.WindowStyle='docked';
 end
 
-function [points,allowed_points] = get_closest_point_in_grid(nx,ny,xy,occupancy_matrix)
+function [points,allowed_points] = get_closest_point_in_grid(xy)
 % Place the point selected by the user in the nearest point of the
 % visibility matrix
-    global file_path
+    global file_path gap_between_cells occupancy_matrix
     
     points = [];    %   vector of neighbours in the grid
     allowed_points = zeros(size(xy,1),1);     %   real points inside the matrix
     %   float numbers inside the square
-    rem_x = rem(xy(:,1),nx);
-    rem_y = rem(xy(:,2),ny);
+    rem_x = rem(xy(:,1),gap_between_cells);
+    rem_y = rem(xy(:,2),gap_between_cells);
     
     %   The four corners of the closest square
     upper_left_corner = [xy(:,1)-rem_x+1, xy(:,2)-rem_y+1];
-    upper_right_corner = [upper_left_corner(:,1)+nx, upper_left_corner(:,2)];
-    lower_left_corner = [upper_left_corner(:,1) upper_left_corner(:,2)+ny];
-    lower_right_corner = [upper_left_corner(:,1)+nx upper_left_corner(:,2)+ny];
+    upper_right_corner = [upper_left_corner(:,1)+gap_between_cells, upper_left_corner(:,2)];
+    lower_left_corner = [upper_left_corner(:,1) upper_left_corner(:,2)+gap_between_cells];
+    lower_right_corner = [upper_left_corner(:,1)+gap_between_cells upper_left_corner(:,2)+gap_between_cells];
     
     % iterate over the corners
     for idx = 1:size(upper_left_corner,1)
