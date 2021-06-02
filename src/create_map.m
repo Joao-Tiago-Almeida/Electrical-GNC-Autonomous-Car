@@ -6,8 +6,8 @@ function create_map()
     path_img = "../maps/IST_campus.png"; %default map image path
     file_path = "../maps/IST_campus/";
     try
-        occupancy_matrix = struct2array(load(string(file_path + 'occupancy_matrix.mat', 'occupancy_matrix')));
-        path_points = struct2array(load(string(file_path + 'path_points.mat', 'path_points')));
+        occupancy_matrix = struct2array(load(string(file_path + 'occupancy_matrix.mat'), 'occupancy_matrix'));
+        path_points = struct2array(load(string(file_path + 'path_points.mat'), 'path_points'));
         map_information = load(string(file_path + 'map_information.mat'));
     catch
     end
@@ -44,7 +44,7 @@ function create_map()
             else
                 % Pick new path points?
                 if strcmpi(questdlg('Do you want to plan a new path? ("No" to use the already defined path)', 'NEW PATH DEFINITION', 'Yes', 'No', 'No'), 'Yes')
-                    load(file_path + "occupancy_matrix.mat", 'occupancy_matrix');
+                    %load(file_path + "occupancy_matrix.mat", 'occupancy_matrix');
                     path_points = pickPathPoints(occupancy_matrix, file_path);
                     %Define new obstacles
                     if strcmpi(questdlg('Do you want to create new road marks (like traffic lights, crosswalks and obstacles)? ("No" to use the already defined marks)', 'New Road Marks', 'Yes', 'No', 'No'), 'Yes')
@@ -62,14 +62,11 @@ function create_map()
         if energy_budget < 0; energy_budget = 0; end
         break;
     end
-    % TODO só entrar aqui quando o file_path não for empty
     
     %Now that the user changed everything he wants (if nothing changed the variables are simply loaded in the beginning)
     save(string(file_path + "occupancy_matrix.mat"), 'occupancy_matrix');
     save(string(file_path + "map_information.mat"), '-struct','map_information');
     save(string(file_path + "path_points.mat"), 'path_points');
-
-
 %********************** UTILS FUNCTIONS *************************
 
     %% Create Map function
@@ -332,6 +329,7 @@ function create_map()
             load(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         end
         
+        figure;
         imshow(occupancy_matrix);
         msgbox("Pick in the map the INITIAL point, the intermediate points and the FINAL point","PICKING PATH POINTS", 'modal');
 
@@ -376,7 +374,7 @@ function create_map()
         path_orientation = str2double(path_orientation);
         path_orientation = wrapTo360(path_orientation)
         
-        save(string(folder_path + "path_points.mat"), 'pathPoints');
+        save(string(folder_path + "path_points.mat"), 'path_points');
         Image = getframe(gcf);
         imwrite(Image.cdata, folder_path + "MAP_w_roads.png", 'png');
     end
@@ -417,7 +415,7 @@ function create_map()
 
     function trafficLight = drawTrafficLight
         disp("Draw in the map one traffic light by drawing the region");
-        h = drawpolygon('Color','g,','InteractionsAllowed','none');
+        h = drawpolygon('Color','g','InteractionsAllowed','none');
 
         h.Color = 'green';
         h.FaceAlpha = 0.1;
