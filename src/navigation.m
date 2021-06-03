@@ -1,7 +1,7 @@
 %%  NAVIGATION
 % This Area is restricted to the NAVIGATION team.
 % Only authorized person are admissible to change this content
-
+% FALTA ALTERAR O THETA!!!
 
 function [P,x_new,y_new,theta_new,flag_energy, ...
     vel_max,E_budget] = navigation(x_GPS,y_GPS,theta_GPS, ...
@@ -46,11 +46,11 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     Norma = norm([x_GPS y_GPS]-[x_past_GPS y_past_GPS]);
     x_new = x_new_old + Norma*cos(theta_new_old);
     y_new = y_new_old + Norma*sin(theta_new_old);
-    theta_new = theta_odom;
+    theta_new = theta_GPS+ theta_GPS*(10^(-5))*((rand(1,1) > 0.5)*2 - 1);
 
 
-    F = [1 0 -Norma*sin(theta_past_GPS);...
-         0 1 Norma*cos(theta_past_GPS); ...
+    F = [1 0 -Norma*sin(theta_new_old);...
+         0 1 Norma*cos(theta_new_old); ...
          0 0 1];
 
     %% Process Covariance
