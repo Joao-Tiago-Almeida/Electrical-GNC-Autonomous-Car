@@ -1,7 +1,6 @@
 function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     
     global debug_mode file_path
-    
     run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
     [change_points, cluster, cluster_boundaries] = path_segmentation(run_points, checkpoints, meters_from_MAP);
 
@@ -13,10 +12,10 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
     
     max_velocity=30; %Km/h
-    velocity = compute_velocity(sampled_path, max_velocity, fixed_sample_rate);
+    velocity = max_velocity*compute_velocity(sampled_path, fixed_sample_rate);
     
     %% Path analysis
-    n_points = length(sampled_path);
+    n_points = meters_from_MAP*norms(diff(sampled_path,2,2));
     path_distance = fixed_sample_rate*(length(sampled_path)-1);
     mean_velocity = sum(velocity)/n_points; 
     path_duration = 3.6*path_distance/mean_velocity;    % 1m/s = 3.6 Km/mh
@@ -49,6 +48,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         xlabel("meters")
         ylabel("meters")
         % plot the final path in the original map
+        
         MAP = load(string(file_path+"MAP.mat"),'MAP');
         MAP.MAP.Name = 'Path Smoothing Velocity';
         plot(checkpoints(:,1),checkpoints(:,2),"kd","LineWidth",6)
@@ -67,29 +67,28 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
 end
 
 
-function velocity = compute_velocity(sampled_path, max_velocity, fixed_sample_rate)
+function velocity = compute_velocity(sampled_path, fixed_sample_rate)
 % This function computes the velocity during the path
     global m_occupancy
     
     interval_between_points = diff(sampled_path);
     angles = atan2(interval_between_points(:, 2),interval_between_points(:,1));
-    angle_variation = [0; diff(angles); 0];
+    angle_variation = diff(angles);
     
     velocity = zeros(length(sampled_path),1);
     velocity(1) = 0; %initial
     velocity(2) = 0.05; %initial
-    for current_loss = 3:length(angle_variation)
+    for current_loss = 1:length(angle_variation)
         % curve 
         if cos(angle_variation(current_loss)) < 1
-            velocity(current_loss) = cos(angle_variation(current_loss))*velocity(current_loss-1);
+            velocity(2+current_loss) = cos(angle_variation(current_loss))*velocity(1+current_loss);
         % straigth
         else
-            velocity(current_loss) = min(1, cos(angle_variation(current_loss))*(1+(fixed_sample_rate/10))*velocity(current_loss-1));
+            velocity(2+current_loss) = min(1, cos(angle_variation(current_loss))*(1+(fixed_sample_rate/10))*velocity(1+current_loss));
         end
         % take into account the road conditions
-        velocity(current_loss) = velocity(current_loss)*(1-m_occupancy(round(sampled_path(3,2)),round(sampled_path(3,1))));
+        velocity(2+current_loss) = velocity(2+current_loss)*m_occupancy(round(sampled_path(3,2)),round(sampled_path(3,1)));
     end
-    velocity = max_velocity*velocity;
 end
 
 function run_points = insert_checkpoints_in_runPoints(run_points, checkpoints)
@@ -103,7 +102,7 @@ function run_points = insert_checkpoints_in_runPoints(run_points, checkpoints)
     % run_points - points from the path planning algorithm
     % check_points - check points from the user input
     
-    for current_checkpoint_index = 2:length(checkpoints)-1
+    for current_checkpoint_index = 2:size(checkpoints,1)-1
         norm_points = vecnorm( run_points - checkpoints(current_checkpoint_index,:), 2, 2 );
         [~, closestpoint_index] = min(norm_points);
         run_points(closestpoint_index,:) = checkpoints(current_checkpoint_index,:);

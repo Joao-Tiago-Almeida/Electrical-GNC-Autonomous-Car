@@ -1,16 +1,17 @@
 % TODO link - https://notability.com/n/0goKZZ3B87j8BrKcE3ruIi
 
 % STARTING FUNCTION to create map, new roads and new path points
-function create_map()
+function create_map
     global occupancy_matrix map_information path_points file_path energy_budget path_orientation
-    path_img = "../maps/IST_campus.png"; %default map image path
-    file_path = "../maps/IST_campus/";
-    try
-        occupancy_matrix = struct2array(load(string(file_path + 'occupancy_matrix.mat'), 'occupancy_matrix'));
-        path_points = struct2array(load(string(file_path + 'path_points.mat'), 'path_points'));
-        map_information = load(string(file_path + 'map_information.mat'));
-    catch
-    end
+%     path_img = "../maps/IST_campus.png"; %default map image path
+%     file_path = "../maps/IST_campus/";
+%     try
+%         occupancy_matrix = load(string(file_path + 'occupancy_matrix.mat'), 'occupancy_matrix');
+%         path_points = load(string(file_path + 'path_points.mat'), 'path_points');
+%         path_orientation = load(string(file_path + 'path_orientation.mat'), 'path_orientation');
+%         map_information = load(string(file_path + 'map_information.mat'));
+%     catch
+%     end
     
     %Changing the Map Image?
     while(true)
@@ -23,7 +24,7 @@ function create_map()
             if(isempty(path_img)); continue; end
             [pathStr, ~, ~] = fileparts(path_img);
             file_path = string(pathStr + "/");
-            [occupancy_matrix, path_points, map_information] = map_generation(path_img, true, file_path);
+            [occupancy_matrix, path_points, map_information, path_orientation] = map_generation(path_img, true, file_path);
         else
             % Working with one of the predefined maps
             list = {'IST_campus','car_track'};%, 'car_track_square'};
@@ -32,45 +33,45 @@ function create_map()
             path_img = string("../maps/" + string(list(index)) + "/" + string(list(index)) + ".png");
             file_path = string("../maps/" + string(list(index)) + "/");
             try
-                occupancy_matrix = struct2array(load(string(file_path + "occupancy_matrix.mat"), 'occupancy_matrix'));
-                path_points = struct2array(load(string(file_path + "path_points.mat"), 'path_points'));
+                load(string(file_path + "occupancy_matrix.mat"), 'occupancy_matrix');
                 map_information = load(string(file_path + 'map_information.mat'));
+                load(string(file_path + "path_points.mat"), 'path_points');
+                load(string(file_path + 'path_orientation.mat'), 'path_orientation');
             catch
             end
 
             %Changing the defined roads?
             if strcmpi(questdlg('Do you want to define new roads? ("No" to use the already defined roads)', 'NEW ROAD DEFINITION', 'Yes', 'No', 'No'), 'Yes')
-                [occupancy_matrix, path_points, map_information] = map_generation(path_img, false, file_path);
+                [occupancy_matrix, path_points, map_information, path_orientation] = map_generation(path_img, false, file_path);
             else
+                % Define new obstacles
+                if strcmpi(questdlg('Do you want to create new road marks (like traffic lights, crosswalks and obstacles)? ("No" to use the already defined marks)', 'New Road Marks', 'Yes', 'No', 'No'), 'Yes')
+                    occupancy_matrix = redefineRoadMarks(occupancy_matrix, file_path);
+                end
                 % Pick new path points?
                 if strcmpi(questdlg('Do you want to plan a new path? ("No" to use the already defined path)', 'NEW PATH DEFINITION', 'Yes', 'No', 'No'), 'Yes')
                     %load(file_path + "occupancy_matrix.mat", 'occupancy_matrix');
-                    path_points = pickPathPoints(occupancy_matrix, file_path);
-                    %Define new obstacles
-                    if strcmpi(questdlg('Do you want to create new road marks (like traffic lights, crosswalks and obstacles)? ("No" to use the already defined marks)', 'New Road Marks', 'Yes', 'No', 'No'), 'Yes')
-                        occupancy_matrix = redefineRoadMarks(occupancy_matrix, path_img);
-                    end
-                else
-                    %Define new obstacles
-                    if strcmpi(questdlg('Do you want to create new road marks (like traffic lights, crosswalks and obstacles)? ("No" to use the already defined marks)', 'New Road Marks', 'Yes', 'No', 'No'), 'Yes')
-                        occupancy_matrix = redefineRoadMarks(occupancy_matrix, path_img);
-                    end
+                    [path_points,path_orientation] = pickPathPoints(occupancy_matrix, file_path);
                 end
             end
         end
         energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'0'}));
         if energy_budget < 0; energy_budget = 0; end
+        
+        if((isempty(occupancy_matrix) || isempty(map_information) || isempty(path_points) || isempty(path_orientation)) == true); continue; end
+        
         break;
     end
     
-    %Now that the user changed everything he wants (if nothing changed the variables are simply loaded in the beginning)
-    save(string(file_path + "occupancy_matrix.mat"), 'occupancy_matrix');
-    save(string(file_path + "map_information.mat"), '-struct','map_information');
-    save(string(file_path + "path_points.mat"), 'path_points');
+%     Now that the user changed everything he wants (if nothing changed the variables are simply loaded in the beginning)
+     save(string(file_path + "occupancy_matrix.mat"), 'occupancy_matrix');
+     save(string(file_path + "map_information.mat"), '-struct','map_information');
+     save(string(file_path + "path_points.mat"), 'path_points');
+     save(string(file_path + "path_orientation.mat"), 'path_orientation');
 %********************** UTILS FUNCTIONS *************************
 
     %% Create Map function
-    function [occupancy_matrix, pathPoints, MAP_info] = map_generation(path_img, newMapInfo, folder_path)
+    function [occupancy_matrix, pathPoints, MAP_info, path_orientation] = map_generation(path_img, newMapInfo, folder_path)
         %% display Map Image
         MAP = figure('Name','MAP','NumberTitle','off');
         pbaspect([1 1 1]);
@@ -135,13 +136,14 @@ function create_map()
        
         
         save(string(folder_path + "MAP.mat"), 'MAP');
+        close;
         save(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         Image = getframe(gcf);
         pause(0.2)
         imwrite(Image.cdata, string(folder_path + "MAP_w_roads.png"));
 
         %% Picking the start and end points and the intermediate ones
-        pathPoints = pickPathPoints(occupancy_matrix, folder_path);
+        [pathPoints,path_orientation] = pickPathPoints(occupancy_matrix, folder_path);
 
         %% draw speacial regions on the map
 
@@ -157,21 +159,13 @@ function create_map()
     end
 
    %Redefine Road Marks (Traffic lights, crosswalks and obstacles)
-    function occupancy_matrix = redefineRoadMarks(occupancy_matrix, path_img)
+    function occupancy_matrix = redefineRoadMarks(occupancy_matrix, folder_path)
         %First clear the previous occupancy_matrix roadSigns (making them =
         %1)
-%         occupancy_matrix = struct2array(occupancy_matrix);
         occupancy_matrix(occupancy_matrix > 1) = 1; 
         %% display Map Image
-        MAP = figure('Name','MAP','NumberTitle','off');
-        pbaspect([1 1 1]);
-        I = imread(path_img);
-        MAP.Children.Position = [0 0 1 1];
-        imshow(I);
-        MAP.WindowStyle = 'docked';
-        MAP.Units = 'pixel';
-        hold on;
-        [X,Y] = meshgrid(1:size(I, 2),1:size(I, 1));
+        MAP = load(string(folder_path+"MAP.mat"),'MAP');
+        [X,Y] = meshgrid(1:size(occupancy_matrix, 2),1:size(occupancy_matrix, 1));
         
         user_option = 1;
         while (user_option ~= 4)
@@ -189,7 +183,8 @@ function create_map()
                 otherwise
             end
         end
-        
+        save(string(folder_path + "MAP.mat"), 'MAP');
+        close;
     end
 
     % Scaling the map to get map informations
@@ -212,10 +207,10 @@ function create_map()
                 h1 = drawpoint('LineWidth',1, 'Color','k');
             end
 
-            prompt = {'Latitude[-90º ; 90º]:', 'Longitude:'};
+            prompt = {'Latitude[-90 ; 90]:', 'Longitude[-180 ; 180]:'};
             point1coords = str2double(inputdlg(prompt,'Coordinates - Point 1',[1 50], {'38.736798','-9.139866'}));
             lat1 = point1coords(1);
-            if(lat1 < -90); lat1 = -90; end % Latitudes have to be between -90º and 90º
+            if(lat1 < -90); lat1 = -90; end % Latitudes have to be between -90 and 90 [degrees]
             if(lat1 > 90); lat1 = 90; end
             lon1 = point1coords(2);
 
@@ -238,7 +233,7 @@ function create_map()
                 h2 = drawpoint('LineWidth',1, 'Color','k');
             end
 
-            prompt = {'Latitude [-90º ; 90º]:', 'Longitude:'};
+            prompt = {'Latitude[-90 ; 90]:', 'Longitude[-180 ; 180]:'};
             point2coords = str2double(inputdlg(prompt,'Coordinates - Point 2',[1 50], {'38.736258','-9.137637'}));
             lat2 = point2coords(1);
             if(lat2 < -90); lat1 = -90; end
@@ -324,13 +319,12 @@ function create_map()
     end
 
     % Function to pick points of the path and save them
-    function pathPoints = pickPathPoints(occupancy_matrix, folder_path)
+    function [pathPoints, path_orientation] = pickPathPoints(occupancy_matrix, folder_path)
         if nargin < 1
             load(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         end
         
-        figure;
-        imshow(occupancy_matrix);
+        MAP = load(string(file_path+"MAP.mat"),'MAP');
         msgbox("Pick in the map the INITIAL point, the intermediate points and the FINAL point","PICKING PATH POINTS", 'modal');
 
         pathPoints = [];
@@ -347,7 +341,9 @@ function create_map()
             catch
                 h1.Visibility = 'off';
             end
-            if ( occupancy_matrix( round(h1.Position(2)), round(h1.Position(1)) ) == 0)
+            x = max(min(size(occupancy_matrix,2),h1.Position(1)),1);
+            y = max(min(size(occupancy_matrix,1),h1.Position(2)),1);
+            if ( occupancy_matrix( round(y), round(x) ) == 0)
                 msgbox("Please pick a point inside a road!!!","Error Picking Point", 'error', 'modal');
                 continue;
             end
@@ -367,16 +363,17 @@ function create_map()
             h.FaceAlpha = 0.8;
         end
 
-        prompt = {'Orientation of Initial Point [0º ; 360º]:', 'Orientation of Ending Point [0º ; 360º]:'};
-        path_orientation = string(inputdlg(prompt,'Definition of Orientations',[1 50], {'0º','0º'}));
-        path_orientation(1) = strrep(path_orientation(1), "º", "");
-        path_orientation(2) = strrep(path_orientation(2), "º", "");
+        prompt = {'Orientation of Initial Point [0; 360] (degrees):', 'Orientation of Ending Point [0 ; 360] (degrees):'};
+        path_orientation = string(inputdlg(prompt,'Definition of Orientations',[1 50], {'0','0'}));
         path_orientation = str2double(path_orientation);
-        path_orientation = wrapTo360(path_orientation)
+        path_orientation = wrapTo360(path_orientation);
         
+        save(string(folder_path + "path_orientation.mat"), 'path_orientation');
         save(string(folder_path + "path_points.mat"), 'path_points');
         Image = getframe(gcf);
         imwrite(Image.cdata, folder_path + "MAP_w_roads.png", 'png');
+        
+        close;
     end
 
     %% Functions to draw specificities of the route (Crossroads, TrafficLights, bumps or holes)

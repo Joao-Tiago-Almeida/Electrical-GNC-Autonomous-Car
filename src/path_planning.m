@@ -11,10 +11,10 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         yx_2_idx_graph idx_graph_2_xy ...
         m_occupancy m_safe  ...
         node_location heap directions ...
-        debug_mode file_path safe_debug;
+        debug_mode file_path plan_debug;
     %global path_points path_orientation
     
-    safe_debug = false; % intermedium plots 
+    plan_debug = false; % intermedium plots 
    
     % to be returned
     sampled_path = [];
@@ -47,10 +47,10 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     idx_graph_2_xy = @(idx) [rem(idx,dx) (idx-rem(idx,dx))/dx+1];
 
     % change to symmatric matrix since it is a minimization problem
-    occupancy_matrix(occupancy_matrix==2)=1;  % ignoring crosswalks
-    occupancy_matrix(occupancy_matrix==3)=0.9;% slown down on traffic lights (the less, the lighter)
-    occupancy_matrix(occupancy_matrix==4)=0;  % stop in Stop sings
-    m_occupancy = 1-occupancy_matrix;
+    m_occupancy = occupancy_matrix;
+    m_occupancy(m_occupancy==2)=1;  % ignoring crosswalks
+    m_occupancy(m_occupancy==3)=0.9;% slown down on traffic lights (the less, the lighter)
+    m_occupancy(m_occupancy==4)=0;  % stop in Stop sings
     m_safe = 1-safe_matrix/max(max(safe_matrix));
 
     %% Auxiliar Structs
@@ -92,7 +92,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         end
         if(itr==n_max_points-1)
             orientation_path(2) = orientation(2);
-            removes_non_desired_neighbours(orientation);
+            removes_non_desired_neighbours(orientation(2));
         end
         
         % performs dijkstra if the checkpoints are safe to drive
@@ -201,7 +201,7 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
     place_car(run_points,10);
     
-    if(safe_debug); return; end
+    if(safe_debug==false); return; end
     
     figure('WindowStyle', 'docked');
     t=0:seconds(path_duration)/(n_points-1):seconds(path_duration)';
@@ -401,6 +401,7 @@ function cost = compute_cost(end_pos,linear_velocity,angular_velocity,distance,l
     global m_safe gap_between_cells
     
     if (loss_criterium=="time")
+        % maximise linear velocity and minimise angular velocity
         loss = prev_cost+(1-linear_velocity)^2+(1+angular_velocity)^2;
     else % (loss_criterium=="distance")
         loss=distance;
@@ -434,7 +435,7 @@ function [linear_velocity,angular_velocity] = compute_velocity(start_dir,end_dir
     angular_velocity = 0.5*angular_velocity;
     
     % weights traffic light ans stop zones
-    linear_velocity = linear_velocity*(1-m_occupancy(1+gap_between_cells*(end_pos(2)-1),1+gap_between_cells*(end_pos(1)-1)));
+    linear_velocity = linear_velocity*m_occupancy(1+gap_between_cells*(end_pos(2)-1),1+gap_between_cells*(end_pos(1)-1));
 end
 
 function thetas_names = round_thetas(thetas)
@@ -497,7 +498,7 @@ function removes_non_desired_neighbours(orientation)
     
     % final point
     for i=1:8
-        [~,I_front] = max(strcmp(directions.names,orientation(2)));
+        [~,I_front] = max(strcmp(directions.names,orientation));
         if(-directions.idxs(I_front,:) == directions.idxs(i,:)); continue; end  % final orientation with oposite orientations
         
         % blocks with zero in the grid
@@ -513,16 +514,13 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 % This function computes the safetiness matrix where it weights the
 % neighbourhood and classifies whether is safe to drive in that zone or not
 
-    global occupancy_matrix map_information debug_mode file_path safe_debug
+    global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
         safe_distance = 1;    % meters
         forbidden_zone = 1.5;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
-
-    % get occupancy values
-    occupancy_matrix(occupancy_matrix > 0) = 1;
 
     % ideal distance to preserve from obstacles
     safe_pixels = safe_distance/meters_from_MAP;
@@ -543,7 +541,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     disk = ((radius).^2) > (radius-X).^2+(radius-Y).^2;
     
     %   evaluates the danger zones
-    Ch_disk = conv2(occupancy_matrix, disk, 'same');
+    Ch_disk = conv2(logical(occupancy_matrix), disk, 'same');
     safe_matrix_aux = round(Ch_disk .* logical(occupancy_matrix));
     safe_matrix_aux = safe_matrix_aux/max(max(safe_matrix_aux));
     safe_matrix_aux(safe_matrix_aux<1)=0;
@@ -561,7 +559,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
-    if(~debug_mode && safe_debug);return;end
+    if((debug_mode || plan_debug)==true);return;end
     
     %% view
     
