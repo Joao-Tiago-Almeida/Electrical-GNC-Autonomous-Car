@@ -384,7 +384,7 @@ function create_map
 
         h.Color = 'red';
         h.FaceAlpha = 0.1;
-        h.Label = 'STOP';
+        %h.Label = 'STOP';
         stopSign = h.Position;
     end
 
@@ -396,7 +396,7 @@ function create_map
         % that mark the road
         h.Color = [130 130 130] / 255;
         h.FaceAlpha = 0.1;
-        h.Label = 'Road';
+        %h.Label = 'Road';
         roadMarkers = h.Position;
     end
 
@@ -406,7 +406,7 @@ function create_map
 
         h.Color = 'white';
         h.FaceAlpha = 0.1;
-        h.Label = 'Cross Walk';
+        %h.Label = 'Cross Walk';
         crosswalk = h.Position;
     end
 
@@ -416,7 +416,7 @@ function create_map
 
         h.Color = 'green';
         h.FaceAlpha = 0.1;
-        h.Label = 'Traffic Light';
+        %h.Label = 'Traffic Light';
         trafficLight = h.Position;
     end
 

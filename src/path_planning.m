@@ -431,8 +431,7 @@ function [linear_velocity,angular_velocity] = compute_velocity(start_dir,end_dir
     linear_velocity = min(1,linear_velocity);
     
     % relieve the steering wheel after each change
-    angular_velocity = change_of_direction*(prev_angular_velocity+pi/4);
-    angular_velocity = 0.5*angular_velocity;
+    angular_velocity = prev_angular_velocity*0.5+(pi/4)*change_of_direction;
     
     % weights traffic light ans stop zones
     linear_velocity = linear_velocity*m_occupancy(1+gap_between_cells*(end_pos(2)-1),1+gap_between_cells*(end_pos(1)-1));

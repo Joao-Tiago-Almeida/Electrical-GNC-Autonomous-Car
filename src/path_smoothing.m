@@ -15,9 +15,8 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     velocity = max_velocity*compute_velocity(sampled_path, fixed_sample_rate);
     
     %% Path analysis
-    n_points = meters_from_MAP*norms(diff(sampled_path,2,2));
-    path_distance = fixed_sample_rate*(length(sampled_path)-1);
-    mean_velocity = sum(velocity)/n_points; 
+    path_distance = sum(meters_from_MAP*vecnorm(diff(sampled_path) ,2,2));
+    mean_velocity = mean(velocity); 
     path_duration = 3.6*path_distance/mean_velocity;    % 1m/s = 3.6 Km/mh
     average_velocity = 3.6*norm(checkpoints(1,:)-checkpoints(end,:))*meters_from_MAP/path_duration;
     
