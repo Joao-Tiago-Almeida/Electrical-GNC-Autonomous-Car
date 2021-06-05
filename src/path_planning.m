@@ -187,10 +187,10 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
 % This functions displays in figures the path planned
     
     global map_information file_path safe_debug
-    MAP = load(string(file_path+"MAP.mat"),'MAP');
-    MAP.MAP.Name = 'Path Planning Velocity';
+    load(string(file_path+"MAP.mat"),'MAP');
+    MAP.Name = 'Path Planning Velocity';
     hold on
-    plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",6)
+    plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",4)
     patch([run_points(:,1);NaN],[run_points(:,2);NaN],[path_data(:,4);NaN],...
         [max_velocity*path_data(:,4);NaN],'EdgeColor','interp',"Linewidth",4);
     cb=colorbar;
@@ -294,7 +294,7 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
             new_idx = yx_2_idx_graph(new_pos(2),new_pos(1));
             direction=directions.names(i);
             [linear_velocity,angular_velocity] = compute_velocity(node.previous,directions.names(i),node.linear_velocity,node.angular_velocity,(directions.names(i)~=node.previous),new_pos);
-            distance = node.distance+(directions.names(i)==node.previous)+(directions.names(i)~=node.previous)*sqrt(2); % Since it it normalised to [0 1] it is equivalent is is a true statement           
+            distance = node.distance + sqrt(strlength(directions.names(i)));
             cost = compute_cost(new_pos,linear_velocity,angular_velocity,distance,loss_criterium,node.cost);
             
             % Define the new atempt
