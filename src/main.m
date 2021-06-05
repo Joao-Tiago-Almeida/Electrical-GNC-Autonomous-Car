@@ -122,7 +122,7 @@ while ~fin
             disp("Colisão inerente: mudar direção")
         end
         
-        if flag_energy% || flag_red_ligth
+        if flag_energy || flag_red_ligth
             stopt = true;
         else
             stopt = false;
@@ -152,9 +152,12 @@ while ~fin
 %             Flag_GPS_Breakup = 1;
 %         end
 %         
-        [P,x_new,y_new,theta_new,flag_energy,vel_max,Energy_wasted] ...
-            = navigation(x,y,theta,x_old,y_old, theta_old,x_odom,y_odom,theta_odom,...
-            P,v,v_old,Energy_wasted,3107, t, x_new, y_new, theta_new,Flag_GPS_Breakup);
+
+        if v ~= 0
+            [P,x_new,y_new,theta_new,flag_energy,vel_max,Energy_wasted] ...
+                = navigation(x,y,theta,x_old,y_old, theta_old,x_odom,y_odom,theta_odom,...
+                P,v,v_old,Energy_wasted,3107, t, x_new, y_new, theta_new,Flag_GPS_Breakup);
+        end
         % Past GPS position
         x_old = x_aux;
         y_old = y_aux;
