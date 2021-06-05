@@ -20,13 +20,8 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     brake_acc = mu*9.8;
     L = 2.2;
     vant = v;
-    ws = 0;
-%     if v == 0
-%         ws = 0;
-%         return;
-%     end
     theta_id = wrapToPi(atan2(dy/v, dx/v));
-    dtheta_aux = wrapToPi(theta_id - wrapToPi(theta));
+    dtheta_aux = difference_from_theta(wrapToPi(theta_id),wrapToPi(theta));
     dtheta = (dtheta_in + dtheta_aux)/2;
     phi_id = atan2(L*dtheta, v);
     if stop || (person && cwalk)
@@ -60,6 +55,10 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
         phi_id = pi/4;
     elseif phi_id < -pi/4
         phi_id = -pi/4;
+    end
+    if v == 0
+        ws = 0;
+        return;
     end
     err_w = (phi_id-phi);
     count_w = count_w + err_w;
