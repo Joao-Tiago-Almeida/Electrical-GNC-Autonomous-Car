@@ -12,7 +12,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         m_occupancy m_safe  ...
         node_location heap directions ...
         debug_mode file_path plan_debug;
-    global path_points path_orientation
+    %global path_points path_orientation
     
     plan_debug = false; % intermedium plots 
    
@@ -31,7 +31,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     if(isempty(path_points)); load(string(file_path+"path_points.mat"),'path_points'); end
     
     safe_matrix = draw_safe_matrix;
-    gap_between_cells = 5;
+    gap_between_cells = floor(1/map_information.meters_from_MAP);
     points = compute_map_grid(path_points);
 
     % convert the points in the occupancy matrix in the grid
@@ -63,7 +63,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
                         'names', ["N","NE","E","SE","S","SW","W","NW"]);
 
     %% DYNAMIC DIJKSTRA - Path planning
-    %https://media.neliti.com/media/publications/165891-EN-shortest-path-with-dynamic-weight-implem.pdf
     
     orientation = round_thetas(path_orientation); % initial and final orientation -- path_orientation
     
@@ -88,11 +87,19 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         orientation_path = ["",""];  % auxilar vect of orentations (for each sub path)\
         % first point of the user chosen track
         if(itr==1)
-            orientation_path(1) = orientation(1);
+            orientation_path(1) = orientation(1)
         end
         if(itr==n_max_points-1)
             orientation_path(2) = orientation(2);
             removes_non_desired_neighbours(orientation(2));
+            
+            % force two end the path two points before in order to have
+            % space to define the end orientation
+            [~,I_front] = max(strcmp(directions.names,orientation(2)));
+            % retrocede 1 movement
+            step = directions.idxs(I_front,:);
+            stop = stop-2*step;
+            idx_stop = yx_2_idx_graph(stop(2),stop(1));
         end
         
         % performs dijkstra if the checkpoints are safe to drive
@@ -102,21 +109,24 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             wb=waitbar((itr-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(itr));
             dijkstra(idx_start,idx_stop,prev_node,"velocity",orientation_path);
         end
-
+        
         if(isempty(node_location(idx_stop).cost))
-            valid_points(itr)=[];
-            disp("Invalid Subpath from point " + itr + " to point " + (itr+1));
-            itr=itr-1;
-            prev_node = prev_prev_node;
-            sub_path = [];
-           
-            
             % cannot start the path
-            if(itr==0)
-                disp("Invalid Path");
+            if(itr==1)
+                disp("Invalid Path (cannot start the path)");
                 return
+            elseif(itr==length(valid_points)-1)
+                disp("Invalid Path (cannot end the path)");
+                break
             end
-        else
+            
+            valid_points(itr+1)=[];
+            disp("Invalid Subpath from point " + (itr) + " to point " + (itr+1));
+            prev_node = prev_prev_node;
+            sub_path = [];  
+            itr=itr-1;
+            
+        else            
             path_data = [path_data;sub_path];
             sub_path = get_path(idx_start,idx_stop);
             prev_prev_node = prev_node;
@@ -139,6 +149,12 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
     path_data = [points_grid(1,:),zeros(1,size(sub_path,2)-2);    path_data;  sub_path];
 
+    if(itr==length(valid_points))   % reach the last point
+        path_data(end+1,:) = path_data(end,:);
+        path_data(end,1:2) = points_grid(valid_points(itr),:);
+        path_data(end,5) = path_data(end-1,5)+2*sqrt(strlength(orientation(2)));
+    end
+    
     %% Path analysis
     max_velocity=30; %Km/h
     n_points = length(path_data);
@@ -428,8 +444,6 @@ function [linear_velocity,angular_velocity] = compute_velocity(start_dir,end_dir
         velocity_increment = 1+map_information.meters_from_MAP*gap_between_cells/10;
         linear_velocity = min(1, prev_linear_velocity*velocity_increment);
     end
-     
-    % increment velocity every iteration
 
     % relieve the steering wheel after each change
     angular_velocity = prev_angular_velocity*0.5+(pi/4)*change_of_direction;
@@ -517,8 +531,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
-        safe_distance = 1;    % meters
-        forbidden_zone = 1.5;  % meters
+        safe_distance = 0.5;    % meters
+        forbidden_zone = 1;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
@@ -559,7 +573,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
-    if((debug_mode || plan_debug)==true);return;end
+    if((debug_mode || plan_debug)==false);return;end
     
     %% view
     

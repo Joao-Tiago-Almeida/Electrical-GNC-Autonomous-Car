@@ -7,4 +7,4 @@ global debug_mode path_points path_orientation
 debug_mode = true;
 create_map;
 
-%[sampled_path, checkpoints] = path_planning(path_points, path_orientation);
+[sampled_path, checkpoints] = path_planning(path_points, path_orientation);
