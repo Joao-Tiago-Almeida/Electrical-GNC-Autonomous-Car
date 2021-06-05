@@ -4,7 +4,7 @@ clc;
 
 %% Guidance
 
-global debug_mode path_points path_orientation
+global debug_mode path_points path_orientation map_information file_path occupancy_matrix
 
 debug_mode = true;
 create_map
@@ -81,7 +81,7 @@ index_pessoa=0;
 count1 = 1;
 object_x_old = -1;
 object_y_old = -1;
-sem = randsample(1:2,1);
+
 old_value = -1;
 
 % GPS Breakups
@@ -118,7 +118,7 @@ while ~fin
         
         %% altera√ß√£o com a branco e a r
         if flag_Inerent_collision
-            disp("colis√£o da rita a falhar")
+            disp("Colis„o inerente: mudar direÁ„o")
         end
         
         if t==1805
@@ -168,10 +168,10 @@ while ~fin
         % Lidar Sensors
 %         
         [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
-            flag_stopSignal,count1,pass_zone_one,pass_zone_two,index_pessoa,sem,old_value]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
+            flag_stopSignal,count1,pass_zone_one,pass_zone_two,index_pessoa,old_value]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
             y_camera,pass_zone_one,pass_zone_two,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
             people1,people2,occupancy_matrix,count1,index_pessoa,cantos_0,map_information.meters_from_MAP,v,flag_passadeira,flag_stopSignal,...
-            flag_Inerent_collision,sem,old_value);
+            flag_Inerent_collision,old_value);
 
 
         error_odom(1,t) = x_odom;
