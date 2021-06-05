@@ -7,7 +7,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     smoothed_path = spline_clusters(change_points, cluster, cluster_boundaries, checkpoints);
     smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
     
-    fixed_sample_rate = 0.5; % meters
+    fixed_sample_rate = 0.2; % meters
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
     
@@ -48,7 +48,8 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         ylabel("meters")
         % plot the final path in the original map
         
-        load(string(file_path+"MAP.mat"),'MAP');
+        MAP = openfig(string(file_path+"MAP.fig"));
+        %load(string(file_path+"MAP.mat"),'MAP');
         MAP.Name = 'Path Smoothing Velocity';
         plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",4)
         hold on
@@ -73,20 +74,25 @@ function velocity = compute_velocity(sampled_path, fixed_sample_rate)
     interval_between_points = diff(sampled_path);
     angles = atan2(interval_between_points(:, 2),interval_between_points(:,1));
     angle_variation = diff(angles);
+    accumulated_angle = 0;
     
     velocity = zeros(length(sampled_path),1);
     velocity(1) = 0; %initial
     velocity(2) = 0.05; %initial
     for current_loss = 1:length(angle_variation)
         % curve 
-        if cos(angle_variation(current_loss)) < 1
-            velocity(2+current_loss) = cos(angle_variation(current_loss))*velocity(1+current_loss);
+        accumulated_angle = accumulated_angle + angle_variation(current_loss);
+        if velocity(1 + current_loss) < 0.05
+            velocity(2+current_loss) = 0.05;
+        elseif abs(accumulated_angle) > 5*(pi/180)
+            velocity(2+current_loss) = cos(accumulated_angle)*velocity(1+current_loss);
+            accumulated_angle = 0;
         % straigth
         else
-            velocity(2+current_loss) = min(1, cos(angle_variation(current_loss))*(1+(fixed_sample_rate/10))*velocity(1+current_loss));
+            velocity(2+current_loss) = min(1,(1+fixed_sample_rate/10)*velocity(1+current_loss));
         end
         % take into account the road conditions
-        velocity(2+current_loss) = velocity(2+current_loss)*m_occupancy(round(sampled_path(3,2)),round(sampled_path(3,1)));
+        velocity(2+current_loss) = velocity(2+current_loss)*m_occupancy(round(sampled_path(current_loss+2,2)),round(sampled_path(current_loss+2,1)));
     end
 end
 
