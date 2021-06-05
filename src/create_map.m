@@ -46,7 +46,7 @@ function create_map
             else
                 % Define new obstacles
                 if strcmpi(questdlg('Do you want to create new road marks (like traffic lights, crosswalks and obstacles)? ("No" to use the already defined marks)', 'New Road Marks', 'Yes', 'No', 'No'), 'Yes')
-                    occupancy_matrix = redefineRoadMarks(occupancy_matrix, file_path);
+                    occupancy_matrix = redefineRoadMarks(occupancy_matrix, file_path, path_img);
                 end
                 % Pick new path points?
                 if strcmpi(questdlg('Do you want to plan a new path? ("No" to use the already defined path)', 'NEW PATH DEFINITION', 'Yes', 'No', 'No'), 'Yes')
@@ -55,7 +55,7 @@ function create_map
                 end
             end
         end
-        energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'0'}));
+        energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'1.8e8'}));
         if energy_budget < 0; energy_budget = 0; end
         
         if((isempty(occupancy_matrix) || isempty(map_information) || isempty(path_points) || isempty(path_orientation)) == true); continue; end
@@ -102,6 +102,7 @@ function create_map
         occupancy_matrix = zeros(size(I, 1), size(I, 2));
         user_option = "No";
         msgbox("Now it's time to draw roads... So draw one closed polygon where you want a road to be! After that a dialog box will pop up for you to choose if you want to define more roads. Don't mind if the roads are overlapped!","Defining the roads", 'modal');
+        roads = {};
         while strcmpi(user_option, "No")
             roadMarkers = drawRoads();
             user_option = questdlg("If you're done drawing roads enter 'Yes' ", 'confirmation', 'Yes', 'No', 'Undo', 'No');
@@ -111,32 +112,43 @@ function create_map
                  user_option = "No";
             else
                 occupancy_matrix = occupancy_matrix + inpolygon(X, Y, roadMarkers(:,1)', roadMarkers(:,2)' );
+                % Save road polygon to file load it after in MAP
+                roads{end + 1} = roadMarkers;
             end
         end
-
         occupancy_matrix(occupancy_matrix>0) = 1; %Normalizing to 1 because 2 roads may be overlapped
 
          %% Now defining other specificities in the environment (defined in occupancy matrix)
         user_option = 1;
+        cross_walks = {};
+        traffic_lights = {};
+        stop_signs = {};
         while (user_option ~= 4)
             user_option = menu('Choose one of the 3 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
+                    cross_walks{end + 1} = crossWalk;
                     occupancy_matrix(logical(inpolygon(X, Y, crossWalk(:,1)', crossWalk(:,2)' ) .* occupancy_matrix)) = 2;
                 case 2
                     trafficLights = drawTrafficLight();
+                    traffic_lights{end + 1} = trafficLights;
                     occupancy_matrix(logical(inpolygon(X, Y, trafficLights(:,1)', trafficLights(:,2)' ) .* occupancy_matrix)) = 3;
                 case 3
                     stopSign = drawStopSign();
+                    stop_signs{end + 1} = stopSign;
                     occupancy_matrix(logical(inpolygon(X, Y, stopSign(:,1)', stopSign(:,2)' ) .* occupancy_matrix)) = 4;
                 otherwise
             end
         end
        
         
-        save(string(folder_path + "MAP.mat"), 'MAP');
+        %savefig(MAP, string(folder_path + "MAP.fig"));
         close;
+        save(string(folder_path + "roads.mat"), 'roads');
+        save(string(folder_path + "cross_walks.mat"), 'cross_walks');
+        save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
+        save(string(folder_path + "stop_signs.mat"), 'stop_signs');
         save(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         Image = getframe(gcf);
         pause(0.2)
@@ -159,31 +171,57 @@ function create_map
     end
 
    %Redefine Road Marks (Traffic lights, crosswalks and obstacles)
-    function occupancy_matrix = redefineRoadMarks(occupancy_matrix, folder_path)
+    function occupancy_matrix = redefineRoadMarks(occupancy_matrix, folder_path, path_img)
         %First clear the previous occupancy_matrix roadSigns (making them =
         %1)
         occupancy_matrix(occupancy_matrix > 1) = 1; 
         %% display Map Image
-        MAP = load(string(folder_path+"MAP.mat"),'MAP');
+        %load(string(folder_path+"MAP.mat"),'MAP');
+        MAP = figure('Name','MAP','NumberTitle','off');
+        pbaspect([1 1 1]);
+        I = imread(path_img);
+        MAP.Children.Position = [0 0 1 1];
+        imshow(I);
+        MAP.WindowStyle = 'docked';
+        MAP.Units = 'pixel';
+        hold on;
+        
+        %MAP = openfig(string(folder_path+"MAP.fig"));
+        load(string(folder_path + "roads.mat"), 'roads');
+        for idx=roads
+            h = drawpolygon('Color','k','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = [130 130 130] / 255;
+            h.FaceAlpha = 0.2;
+        end
+        
         [X,Y] = meshgrid(1:size(occupancy_matrix, 2),1:size(occupancy_matrix, 1));
         
         user_option = 1;
+        cross_walks = {};
+        traffic_lights = {};
+        stop_signs = {};
         while (user_option ~= 4)
             user_option = menu('Choose one of the 3 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
+                    cross_walks{end + 1} = crossWalk;
                     occupancy_matrix(logical(inpolygon(X, Y, crossWalk(:,1)', crossWalk(:,2)' ) .* occupancy_matrix)) = 2;
                 case 2
                     trafficLights = drawTrafficLight();
+                    traffic_lights{end + 1} = trafficLights;
                     occupancy_matrix(logical(inpolygon(X, Y, trafficLights(:,1)', trafficLights(:,2)' ) .* occupancy_matrix)) = 3;
                 case 3
                     stopSign = drawStopSign();
+                    stop_signs{end + 1} = stopSign;
                     occupancy_matrix(logical(inpolygon(X, Y, stopSign(:,1)', stopSign(:,2)' ) .* occupancy_matrix)) = 4;
                 otherwise
             end
         end
-        save(string(folder_path + "MAP.mat"), 'MAP');
+        savefig(MAP, string(folder_path + "MAP.fig"), 'compact');
+        save(string(folder_path + "cross_walks.mat"), 'cross_walks');
+        save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
+        save(string(folder_path + "stop_signs.mat"), 'stop_signs');
         close;
     end
 
@@ -274,57 +312,49 @@ function create_map
         save(string(folder_path + "map_information.mat"),'-struct','MAP_info');
     end
 
-    % Because given points are not exactly over the grid lines so we need to aproximate them to the grid 
-    function [points,allowed_points] = get_closest_point_in_grid(nx,ny,xy,occupancy_matrix, folder_path)
-        points = [];    %   vector of neighbours in the grid
-        allowed_points = zeros(size(xy,1),1);     %   real points inside the matrix
-        %   float numbers inside the square
-        rem_x = rem(xy(:,1),nx);
-        rem_y = rem(xy(:,2),ny);
-
-        %   The four corners of the closest square
-        upper_left_corner = [xy(:,1)-rem_x+1, xy(:,2)-rem_y+1];
-        upper_right_corner = [upper_left_corner(:,1)+nx, upper_left_corner(:,2)];
-        lower_left_corner = [upper_left_corner(:,1) upper_left_corner(:,2)+ny];
-        lower_right_corner = [upper_left_corner(:,1)+nx upper_left_corner(:,2)+ny];
-
-        % iterate over the corners
-        for idx = 1:size(upper_left_corner,1)
-            best_corner = [upper_left_corner(idx,:)
-                           upper_right_corner(idx,:)
-                           lower_left_corner(idx,:)
-                           lower_right_corner(idx,:)];
-
-            dist = vecnorm(xy(idx,:)-best_corner,2,2);    % euclidian distance to the corners: (vec, euclidian norm, dim)
-
-            [~,I] = sort(dist); % closet neighbour
-
-            % verify if the point is inside the road
-            for idj = 1:length(I)
-                if(occupancy_matrix(best_corner(I(idj),2), best_corner(I(idj),1)) ~= 0)    % point inside the road
-                    points = [points;best_corner(I(idj),:)];
-                    allowed_points(idx) = 1;
-                    break
-                end
-            end
-        end
-
-        if(sum(allowed_points) == 0)
-            msgbox("Unfortunately none of the path points are valid!!!","Error", 'error', 'modal');
-        elseif(sum(allowed_points) == 1)
-            msgbox("Unfortunately there is only ONE valid point... No path can be built from just 1 point!!!","Error", 'error', 'modal');
-            points = [];
-        end
-        save(string(folder_path + "pathPoints_grid.mat"), 'points');
-    end
-
     % Function to pick points of the path and save them
     function [pathPoints, path_orientation] = pickPathPoints(occupancy_matrix, folder_path)
         if nargin < 1
             load(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         end
         
-        MAP = load(string(file_path+"MAP.mat"),'MAP');
+        %load(string(file_path+"MAP.mat"),'MAP');
+        %MAP = openfig(string(file_path+"MAP.fig"));
+        MAP = figure('Name','MAP','NumberTitle','off');
+        pbaspect([1 1 1]);
+        I = imread(path_img);
+        MAP.Children.Position = [0 0 1 1];
+        imshow(I);
+        MAP.WindowStyle = 'docked';
+        MAP.Units = 'pixel';
+        hold on;
+        %TODO: Load roads and roadmarks to fig
+        load(string(folder_path + "roads.mat"), 'roads');
+        for idx=roads
+            h = drawpolygon('Color','k','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = [130 130 130] / 255;
+            h.FaceAlpha = 0.2;
+        end
+        
+        load(string(folder_path + "cross_walks.mat"), 'cross_walks');
+        load(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
+        load(string(folder_path + "stop_signs.mat"), 'stop_signs');
+        for idx=cross_walks
+            h = drawpolygon('Color','w','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = 'white';
+            h.FaceAlpha = 0.1;
+        end
+        for idx=traffic_lights
+            h = drawpolygon('Color','g','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = 'green';
+            h.FaceAlpha = 0.1;
+         end
+        for idx=stop_signs
+            h = drawpolygon('Color','r','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = 'red';
+            h.FaceAlpha = 0.1;
+        end
+        
         msgbox("Pick in the map the INITIAL point, the intermediate points and the FINAL point","PICKING PATH POINTS", 'modal');
 
         pathPoints = [];
@@ -358,9 +388,6 @@ function create_map
                 user_option = "No";
                 continue;
             end
-
-            h.Color = 'magenta';
-            h.FaceAlpha = 0.8;
         end
 
         prompt = {'Orientation of Initial Point [0; 360] (degrees):', 'Orientation of Ending Point [0 ; 360] (degrees):'};
@@ -368,6 +395,7 @@ function create_map
         path_orientation = str2double(path_orientation);
         path_orientation = wrapTo360(path_orientation);
         
+        savefig(MAP, string(folder_path + "MAP.fig"), 'compact');
         save(string(folder_path + "path_orientation.mat"), 'path_orientation');
         save(string(folder_path + "path_points.mat"), 'path_points');
         Image = getframe(gcf);
@@ -395,7 +423,7 @@ function create_map
         % Change road color the mark it's done and retrieve pointer positions
         % that mark the road
         h.Color = [130 130 130] / 255;
-        h.FaceAlpha = 0.1;
+        h.FaceAlpha = 0.2;
         %h.Label = 'Road';
         roadMarkers = h.Position;
     end
