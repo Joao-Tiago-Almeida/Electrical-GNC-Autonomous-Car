@@ -12,7 +12,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         m_occupancy m_safe  ...
         node_location heap directions ...
         debug_mode file_path plan_debug;
-    %global path_points path_orientation
+    global path_points path_orientation
     
     plan_debug = false; % intermedium plots 
    
@@ -105,14 +105,15 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
         if(isempty(node_location(idx_stop).cost))
             valid_points(itr)=[];
+            disp("Invalid Subpath from point " + itr + " to point " + (itr+1));
             itr=itr-1;
             prev_node = prev_prev_node;
             sub_path = [];
-            disp("Invalid Subpath")
+           
             
             % cannot start the path
             if(itr==0)
-                disp("Invalid Subpath");
+                disp("Invalid Path");
                 return
             end
         else
@@ -120,6 +121,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             sub_path = get_path(idx_start,idx_stop);
             prev_prev_node = prev_node;
             prev_node = node_location(idx_stop);
+            disp("Valid Subpath from point " + itr + " to point " + (itr+1));
             itr=itr+1;
         end
 
@@ -187,7 +189,8 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
 % This functions displays in figures the path planned
     
     global map_information file_path safe_debug
-    load(string(file_path+"MAP.mat"),'MAP');
+    MAP = openfig(string(file_path+"MAP.fig"));
+    %load(string(file_path+"MAP.mat"),'MAP');
     MAP.Name = 'Path Planning Velocity';
     hold on
     plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",4)
@@ -423,13 +426,11 @@ function [linear_velocity,angular_velocity] = compute_velocity(start_dir,end_dir
     	linear_velocity = prev_linear_velocity*cos(pi/4);
     else                                        % straight movement
         velocity_increment = 1+map_information.meters_from_MAP*gap_between_cells/10;
-        linear_velocity = prev_linear_velocity*velocity_increment;
+        linear_velocity = min(1, prev_linear_velocity*velocity_increment);
     end
      
     % increment velocity every iteration
-   
-    linear_velocity = min(1,linear_velocity);
-    
+
     % relieve the steering wheel after each change
     angular_velocity = prev_angular_velocity*0.5+(pi/4)*change_of_direction;
     

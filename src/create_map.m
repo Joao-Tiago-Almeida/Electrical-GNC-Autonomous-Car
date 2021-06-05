@@ -390,7 +390,7 @@ function create_map
             end
         end
 
-        prompt = {'Orientation of Initial Point [0; 360] (degrees):', 'Orientation of Ending Point [0 ; 360] (degrees):'};
+        prompt = {'Orientation of Initial Point (degrees):', 'Orientation of Ending Point (degrees):'};
         path_orientation = string(inputdlg(prompt,'Definition of Orientations',[1 50], {'0','0'}));
         path_orientation = str2double(path_orientation);
         path_orientation = wrapTo360(path_orientation);
