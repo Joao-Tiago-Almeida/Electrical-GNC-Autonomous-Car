@@ -31,7 +31,7 @@ thetat = theta_generator(xt,yt);
 
 % Initialize timer
 start(my_timer);
-stp = 0.02;
+stp = 0.06; % 0.013 para ist e 0.084 para corrida
 
 % Initialize Car Exact Position and Old GPS position
 x = xt(1);y = yt(1);theta = thetat(1);
@@ -57,6 +57,9 @@ w_phi = 0;
 
 % Odometry deviation
 error = 0.005;
+
+% Path counter
+wait_time = 1;
 
 % Initialize Estimate Covariance of the EKF
 
@@ -102,18 +105,16 @@ while ~fin
     Flag_GPS_Breakup = 0;
     if start_v == 1
         % Measure the distance to tranjectory
-        [point, distance, thetap, wait_time] = dist_to_traj(x_new, y_new, xt, yt, thetat, v, stp);
+        [point, distance, thetap, wait_time] = dist_to_traj(x_new, y_new, xt, yt, thetat, v, stp, wait_time);
         dist_to_p(t+1) = distance;
-        if distance > 2
+        if distance > 1
             debug = 1
             %break;
         end
         % If the energy is zero, then stop the car
         
-        if flag_energy
-            stopt = true;
-        else
-            stopt = false;
+        if t == 190
+            pause_please = 1;
         end
         
         %% alteraÃ§Ã£o com a branco e a r
@@ -121,13 +122,18 @@ while ~fin
             disp("Colisão inerente: mudar direção")
         end
         
-        if t==1805
-            debug = 1;
+        if flag_red_ligth || flag_energy
+            stopt = true;
+        else
+            stopt = false;
         end
         
         % Controller of the Car
-        
-        [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new, wrapToPi(theta_new), phi, v, difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), wet, stopt);
+        theta_safe = TrackPredict(thetat, 0.02, wait_time);
+        [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
+            wrapToPi(theta_new), phi, v,...
+            difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)),...
+            theta_safe, wet, stopt);
         v_aux = v;
 
         % Car simulator
