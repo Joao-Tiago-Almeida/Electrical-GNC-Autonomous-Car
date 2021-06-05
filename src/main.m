@@ -122,7 +122,7 @@ while ~fin
             disp("Colisão inerente: mudar direção")
         end
         
-        if flag_red_ligth || flag_energy
+        if flag_energy% || flag_red_ligth
             stopt = true;
         else
             stopt = false;
