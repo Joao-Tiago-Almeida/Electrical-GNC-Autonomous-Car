@@ -100,7 +100,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             safe_matrix(1+gap_between_cells*(stop(2)-1),1+gap_between_cells*(stop(1)-1))>0 )
         
             wb=waitbar((itr-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(itr));
-            dijkstra(idx_start,idx_stop,prev_node,"distance",orientation_path);
+            dijkstra(idx_start,idx_stop,prev_node,"velocity",orientation_path);
         end
 
         if(isempty(node_location(idx_stop).cost))
@@ -367,7 +367,7 @@ function reachable_neighbours = identify_reachable_neighbours(xy,previous_direct
                             .*diag(map_grid(points(:,2),points(:,1)))...    % inside map _grid
                             .*in_boundaries;
    idxs = ones(1,8);
-    if(previous_direction ~= '')
+    if(previous_direction ~= "")
         % When the previous direcition is one of {N;E;S;W}, the next
         % direction has to contain this letter in the direction name
         % once the available movements are withing [-45,45]degrees.
@@ -400,7 +400,7 @@ function cost = compute_cost(end_pos,linear_velocity,angular_velocity,distance,l
     
     global m_safe gap_between_cells
     
-    if (loss_criterium=="time")
+    if (loss_criterium=="velocity")
         % maximise linear velocity and minimise angular velocity
         loss = prev_cost+(1-linear_velocity)^2+(1+angular_velocity)^2;
     else % (loss_criterium=="distance")
