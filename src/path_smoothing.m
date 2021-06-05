@@ -50,7 +50,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         
         MAP = load(string(file_path+"MAP.mat"),'MAP');
         MAP.MAP.Name = 'Path Smoothing Velocity';
-        plot(checkpoints(:,1),checkpoints(:,2),"kd","LineWidth",6)
+        plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",6)
         hold on
         patch([sampled_path(:,1);NaN],[sampled_path(:,2);NaN],[velocity;NaN],...
             [velocity;NaN],'EdgeColor','interp', 'LineWidth', 4);

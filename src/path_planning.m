@@ -190,7 +190,7 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     MAP = load(string(file_path+"MAP.mat"),'MAP');
     MAP.MAP.Name = 'Path Planning Velocity';
     hold on
-    plot(checkpoints(:,1),checkpoints(:,2),"kd","LineWidth",6)
+    plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",6)
     patch([run_points(:,1);NaN],[run_points(:,2);NaN],[path_data(:,4);NaN],...
         [max_velocity*path_data(:,4);NaN],'EdgeColor','interp',"Linewidth",4);
     cb=colorbar;
