@@ -7,7 +7,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     smoothed_path = spline_clusters(change_points, cluster, cluster_boundaries, checkpoints);
     smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
     
-    fixed_sample_rate = 0.2; % meters
+    fixed_sample_rate = 0.02; % meters
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
     

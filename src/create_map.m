@@ -141,18 +141,13 @@ function create_map
                 otherwise
             end
         end
-       
         
-        %savefig(MAP, string(folder_path + "MAP.fig"));
         close;
         save(string(folder_path + "roads.mat"), 'roads');
         save(string(folder_path + "cross_walks.mat"), 'cross_walks');
         save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         save(string(folder_path + "stop_signs.mat"), 'stop_signs');
         save(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
-        Image = getframe(gcf);
-        pause(0.2)
-        imwrite(Image.cdata, string(folder_path + "MAP_w_roads.png"));
 
         %% Picking the start and end points and the intermediate ones
         [pathPoints,path_orientation] = pickPathPoints(occupancy_matrix, folder_path);
