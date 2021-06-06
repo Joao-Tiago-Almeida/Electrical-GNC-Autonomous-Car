@@ -4,7 +4,7 @@ clc;
 
 %% Guidance
 
-global debug_mode path_points path_orientation map_information file_path occupancy_matrix
+global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate
 
 debug_mode = true;
 create_map
@@ -31,7 +31,7 @@ thetat = theta_generator(xt,yt);
 
 % Initialize timer
 start(my_timer);
-stp = 0.06; % 0.013 para ist e 0.084 para corrida
+stp = 0.1;%06; % 0.013 para ist e 0.084 para corrida
 
 % Initialize Car Exact Position and Old GPS position
 x = xt(1);y = yt(1);theta = thetat(1);
@@ -82,6 +82,8 @@ count = 1;
 index_pessoa=0;
 
 count1 = 1;
+x_people1 = people1(1,:);y_people1=people1(2,:);
+x_people2 = people2(1,:);y_people2=people2(2,:);
 object_x_old = -1;
 object_y_old = -1;
 
@@ -127,9 +129,21 @@ while ~fin
         else
             stopt = false;
         end
+        if flag_red_ligth && count==1
+            [icondata,iconcmap] = imread(string(file_path+"sem.jpg")); 
+            h=msgbox('Red Light detected',...
+         'Camera','custom',icondata,iconcmap);
+            count=0;
+        elseif flag_passadeira && count==1
+            [icondata,iconcmap] = imread(string(file_path+"passa.jpeg")); 
+            h=msgbox('Crosswalk detected',...
+            'Camera','custom',icondata,iconcmap);
+            count=0;
+        end
+        
         
         % Controller of the Car
-        theta_safe = TrackPredict(thetat, 0.02, wait_time);
+        theta_safe = TrackPredict(thetat, 0.2, wait_time);
         [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
             wrapToPi(theta_new), phi, v,...
             difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)),...
@@ -177,10 +191,10 @@ while ~fin
         % Lidar Sensors
 %         
         [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
-            flag_stopSignal,count1,pass_zone_one,pass_zone_two,index_pessoa,old_value]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
-            y_camera,pass_zone_one,pass_zone_two,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
-            people1,people2,occupancy_matrix,count1,index_pessoa,cantos_0,map_information.meters_from_MAP,v,flag_passadeira,flag_stopSignal,...
-            flag_Inerent_collision,old_value);
+            flag_stopSignal,count1,index_pessoa,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
+            y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
+            people1,people2,occupancy_matrix,count1,index_pessoa,cantos_0,map_information.meters_from_MAP,v,flag_stopSignal,...
+            flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 );
 
 
         error_odom(1,t) = x_odom;
@@ -195,6 +209,10 @@ while ~fin
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
     
     pause(0.075);
+    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0)
+        delete(h);
+        count=1;
+    end
 end
 toc
 
