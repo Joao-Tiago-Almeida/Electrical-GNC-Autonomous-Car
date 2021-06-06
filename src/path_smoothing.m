@@ -1,6 +1,7 @@
 function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     
-    global debug_mode file_path fixed_sample_rate
+    global debug_mode file_path fixed_sample_rate max_velocity
+    
     run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
     [change_points, cluster, cluster_boundaries] = path_segmentation(run_points, checkpoints, meters_from_MAP);
 
@@ -11,7 +12,6 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
     
-    max_velocity=30; %Km/h
     velocity = max_velocity*compute_velocity(sampled_path, fixed_sample_rate);
     
     %% Path analysis
