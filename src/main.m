@@ -100,7 +100,7 @@ GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
-MAP_real_time = load(string(file_path+"MAP.mat"),'MAP');
+MAP_real_time = openfig(string(file_path+"MAP.fig"));;
 MAP_real_time.MAP.Name = "O puto tÃ¡ aÃ­ nos drifts -> piu piu";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
