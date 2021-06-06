@@ -87,7 +87,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         orientation_path = ["",""];  % auxilar vect of orentations (for each sub path)\
         % first point of the user chosen track
         if(itr==1)
-            orientation_path(1) = orientation(1)
+            orientation_path(1) = orientation(1);
         end
         if(itr==n_max_points-1)
             orientation_path(2) = orientation(2);
