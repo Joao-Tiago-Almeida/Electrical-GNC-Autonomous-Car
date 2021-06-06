@@ -4,8 +4,9 @@ clc;
 
 %% Guidance
 
-global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate
+global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity
 
+max_velocity=30; %Km/h
 debug_mode = true;
 create_map
 
@@ -100,7 +101,7 @@ conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
 MAP_real_time = load(string(file_path+"MAP.mat"),'MAP');
-MAP_real_time.MAP.Name = "O puto tá aí nos drifts -> piu piu";
+MAP_real_time.MAP.Name = "O puto tÃ¡ aÃ­ nos drifts -> piu piu";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
 
@@ -121,9 +122,9 @@ while ~fin
             pause_please = 1;
         end
         
-        %% alteração com a branco e a r
+        %% alteraÃ§Ã£o com a branco e a r
         if flag_Inerent_collision
-            disp("Colis�o inerente: mudar dire��o")
+            disp("Colisão inerente: mudar direção")
         end
         
         if flag_energy || flag_red_ligth
