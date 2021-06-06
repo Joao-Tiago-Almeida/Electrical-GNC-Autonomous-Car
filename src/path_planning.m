@@ -48,7 +48,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
     % change to symmatric matrix since it is a minimization problem
     m_occupancy = occupancy_matrix;
-    m_occupancy(m_occupancy==2)=1;  % ignoring crosswalks
+    m_occupancy(logical(m_occupancy<3 .* m_occupancy>4))=1;  % ignoring crosswalks people and gps signs
     m_occupancy(m_occupancy==3)=0.9;% slown down on traffic lights (the less, the lighter)
     m_occupancy(m_occupancy==4)=0;  % stop in Stop sings
     m_safe = 1-safe_matrix/max(max(safe_matrix));
@@ -87,7 +87,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         orientation_path = ["",""];  % auxilar vect of orentations (for each sub path)\
         % first point of the user chosen track
         if(itr==1)
-            orientation_path(1) = orientation(1)
+            orientation_path(1) = orientation(1);
         end
         if(itr==n_max_points-1)
             orientation_path(2) = orientation(2);
@@ -177,6 +177,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     % there are not suficient number of points
     if(length(valid_points)<2);return;end
+    
 
     %% validate checkpoints
     checkpoints=path_points(valid_points,:);
@@ -191,7 +192,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     
     %% Final plots and verifications
-    if(debug_mode)
+    if(debug_mode==true)
         inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
         disp("[EOF] Path Planning")
         license('inuse')
@@ -531,8 +532,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
-        safe_distance = 0.5;    % meters
-        forbidden_zone = 1;  % meters
+        safe_distance = 5;    % meters
+        forbidden_zone = 1.5;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
@@ -573,7 +574,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
-    if((debug_mode || plan_debug)==false);return;end
+    if((debug_mode && plan_debug)==false);return;end
     
     %% view
     
