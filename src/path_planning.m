@@ -11,7 +11,8 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         yx_2_idx_graph idx_graph_2_xy ...
         m_occupancy m_safe  ...
         node_location heap directions ...
-        debug_mode file_path plan_debug;
+        debug_mode file_path plan_debug...
+	max_velocity;
     %global path_points path_orientation
     
     plan_debug = false; % intermedium plots 
@@ -156,7 +157,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     end
     
     %% Path analysis
-    max_velocity=30; %Km/h
     n_points = length(path_data);
     path_distance = gap_between_cells*path_data(end,5)*map_information.meters_from_MAP;
     mean_velocity = max_velocity*sum(path_data(:,4))/n_points; 
