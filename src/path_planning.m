@@ -242,10 +242,10 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
         return
     end
 
-    figure('WindowStyle', 'docked');
-    lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
-    lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
-    geoplot(lat,lon,'g-*')
+%     figure('WindowStyle', 'docked');
+%     lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
+%     lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
+%     geoplot(lat,lon,'g-*')
 
     %% Web map
     % webmap

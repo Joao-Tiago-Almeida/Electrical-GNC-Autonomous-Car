@@ -1,6 +1,6 @@
 function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     
-    global debug_mode file_path
+    global debug_mode file_path fixed_sample_rate
     run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
     [change_points, cluster, cluster_boundaries] = path_segmentation(run_points, checkpoints, meters_from_MAP);
 

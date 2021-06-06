@@ -1,7 +1,7 @@
 function t_diff = difference_from_theta(theta_a, theta_b)
     dif = norm(theta_a-theta_b);
-
-    t_diff = dif - sgn(dif-pi)*(dif-pi)*2;
+    dif2 = theta_a-theta_b;
+    t_diff = dif2 - sgn(dif-pi)*(dif-pi)*2;
 
 end
 
