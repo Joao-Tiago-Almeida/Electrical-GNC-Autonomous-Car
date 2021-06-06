@@ -1,15 +1,13 @@
-function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,flag_stopSignal,count1,pass_zone_one,pass_zone_two,i,old_value]...
-    = sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera,y_camera,pass_zone_one,pass_zone_two,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
-    people1,people2,occupancy_grid,count1,i,cantos_0,resolution,v,flag_passadeira,flag_stopSignal,flag_Inerent_collision,old_value)
+function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,flag_stopSignal,count1,i,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]...
+    = sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera,y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
+    people1,people2,occupancy_grid,count1,i,cantos_0,resolution,v,flag_stopSignal,flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 )
 
     % Person variable Init
     x_Person =[];
     y_Person  = [];
-    x_people1 = people1(1,:);
-    y_people1 = people1(2,:);
+    
     theta_people1 = people1(3,:);
-    x_people2 = people2(1,:);
-    y_people2 = people2(2,:);
+    flag_passadeira=0;
     theta_people2 = people2(3,:);
     a = 0;
     b= 1;
@@ -33,7 +31,8 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
     % if sem is equal to 1 the light is green
     % if sem is equal to 2 the light is red
     if count1>=1 && count1 < 50
-        sem = 2;
+     
+        sem = 2;          
     elseif count1>=50 && count1<= 100
         sem=1;
     end
@@ -51,60 +50,81 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                 
                 if pos_camera(1,index_camera) >=0 && pos_camera(2,index_camera) >= 0
                     if occupancy_grid(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 2 
-                        if path2_not_implemented == 1 && pass_zone_one                    
-                             x_people2 = x_people2 + pos_camera(1,index_camera);
-                             y_people2 = y_people2 + pos_camera(2,index_camera)+10;
-                             path2_not_implemented = 0;
+                        %If the camera detects a crosswalk we insert a
+                        %person 
+                        % the variable path1_not_implemented
+                        % people1 is a person walking horizontly
+                        % Horizontal crossroad 
+                        if abs(sin(theta))> 0.5
+                            if path1_not_implemented    
+                                
+                                 x_people1 = people1(1,:) + pos_camera(1,index_camera)+10;
+                                 y_people1 =(people1(2,:)) + pos_camera(2,index_camera)+4;
+
+                                 path1_not_implemented = 0;                   
+                            end
                         end
-                        if path1_not_implemented == 1           
-                             x_people1 = x_people1 + pos_camera(1,index_camera);
-                             y_people1 = y_people1 + pos_camera(2,index_camera)+10;
-                             path1_not_implemented = 0;                   
+                        % people2 is a person walking verticaly
+                        % Vertical crossroad
+                         if abs(sin(theta))<=0.5
+                            if path2_not_implemented    
+                                
+                                 x_people2 = people2(1,:) + pos_camera(1,index_camera)+4;
+                                 y_people2 =(people2(2,:)) + pos_camera(2,index_camera)+10;
+                                    
+                                 path2_not_implemented = 0;                   
+                            end
                         end
-                                          
+
+                                      
                         flag_passadeira = 1
                     end                             
                     if occupancy_grid(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 3
                          
-                        if sem ==1 
+                        if sem == 1 
                             disp('Green light');
+                            
                             flag_red_ligth = 0;
-                        elseif sem==2
+                        elseif sem == 2
+                            
+                           
                              disp('Red light');
                              flag_red_ligth = 1;
                         end
+                        
+                        
                     end
                     if occupancy_grid(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 4
-                         
-                         
+                                                  
                       flag_stopSignal = 1;
 %                       disp('Stop');
                     end
                     if occupancy_grid(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 5
                                                  
-                         flag_Person = 1
+                         flag_Person = 1;
                           x_Person = [x_Person,round(pos_camera(1,index_camera)/resolution)+1];
                           y_Person = [y_Person,round(pos_camera(2,index_camera)/resolution)+1];
-                          theta_people = -pi + (2*pi).*rand(1,1);
-              
+                          
                     end
 
                 end       
     end
     
     % Path for person 1
-    if x >= 0 && y >= 0 && pass_zone_one == 0 && path1_not_implemented ==0  
+    if x >= 0 && y >= 0  && path1_not_implemented == 0  
         i = i + 1;
         if i<= 50
-
+            
+         
+            % Check if the path is in a valid position
             if x_people1(i) >= 0 && y_people1(i) >= 0
-
+                
                 if i >= 2 && x_people1(i-1) >= 0 && y_people1(i-1)>=0
                     occupancy_grid(round(y_people1(i-1)/resolution)+1,round(x_people1(i-1)/resolution)+1) = old_value;
                          
                 end
-
-                plot(round(x_people1(i)/resolution)+1,round(y_people1(i)/resolution)+1,'rX');
+                
+                plot(round(x_people1(i)/resolution),round(y_people1(i)/resolution),'rX');
 
                 % Save occupancy_grid value before inserting a person
                 old_value = occupancy_grid(round(y_people1(i)/resolution)+1,round(x_people1(i)/resolution)+1);
@@ -115,20 +135,18 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                 % Values used to check if there is going to be a collision
                 % between the car and the person
                 theta_people = theta_people1(i);
-%                 x_people = x_people1(i);
-%                 y_people = y_people1(i);
 
             end
         else
             i = 0;
-            % End of the simulated path for person number 1
-            pass_zone_one = 1;
+            % End of the simulated path for person number 1           
+            path1_not_implemented =1;            
         end
         
      end
 
     % Path for 2º Person 
-     if x >= 0 && y >= 0  && pass_zone_two == 0  && path2_not_implemented == 0 
+     if x >= 0 && y >= 0  && path2_not_implemented == 0 
         i = i + 1;
         if i<= 50
 
@@ -139,7 +157,8 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                         
                 end
 
-                plot(round(y_people2(i)/resolution)+1,round(x_people2(i)/resolution)+1,'rX');
+                plot(round(x_people2(i)/resolution)+1,round(y_people2(i)/resolution)+1,'rX');
+                
                 old_value = occupancy_grid(round(y_people2(i)/resolution)+1,round(x_people2(i)/resolution)+1);
                 occupancy_grid(round(y_people2(i)/resolution)+1,round(x_people2(i)/resolution)+1) = 5;
                 theta_people = theta_people2(i);
@@ -149,7 +168,7 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
             end
         else
             i = 0;
-            pass_zone_two = 1;
+            path2_not_implemented = 1;
         end
         
      end
@@ -227,8 +246,7 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
 %         h6 = plot(pos_camera(1,:),pos_camera(2,:),'g*');
         plot(pos(1,end)/resolution,pos(2,end)/resolution,'m*');
         plot(pos(1,272)/resolution,pos(2,272)/resolution,'m*');
-        
-        
+      
 %         h7 = plot(cantos(1,:),cantos(2,:),'b');
 
 
