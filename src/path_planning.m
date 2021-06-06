@@ -191,8 +191,8 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     
     %% Final plots and verifications
-    if(debug_mode)
-        inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
+    if(debug_mode == true)
+        %inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
         disp("[EOF] Path Planning")
         license('inuse')
         %[fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');

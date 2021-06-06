@@ -5,7 +5,7 @@ clc;
 %% Guidance
 
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity
-
+debug_mode = false
 max_velocity=30; %Km/h
 debug_mode = true;
 create_map
@@ -95,13 +95,13 @@ old_value = -1;
 % GPS Breakups
 
 % Vector of points for GPS Break Ups - They can Be Random and in specific
-% areas
+% areas - FALTA METER A FUNCIONAR COM OQ UE VEM DO .mat
 GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
 MAP_real_time = openfig(string(file_path+"MAP.fig"));;
-MAP_real_time.MAP.Name = "O puto tÃ¡ aÃ­ nos drifts -> piu piu";
+MAP_real_time.Name = "O puto tÃ¡ aÃ­ nos drifts -> piu piu";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
 
@@ -144,13 +144,7 @@ while ~fin
             count=0;
         end
         
-        if randsample( [0 1], 1, true, [0.999 0.001] )
-            GPS_Breakups = [GPS_Breakups; t];
-            if conglomerate_breakups
-                GPS_Breakups = [GPS_Breakups; (repmat(t,10,1) + (1:1:10)')];
-                conglomerate_breakups = 0;
-            end   
-        end
+
         
         % Controller of the Car
         theta_safe = TrackPredict(thetat, fixed_sample_rate, wait_time);
@@ -171,7 +165,18 @@ while ~fin
         x_odom = x_odom+error*sin(theta)+(x-x_old);
         y_odom = y_odom+error*cos(theta)+(y-y_old);
         theta_odom = theta;
-
+        
+        if randsample( [0 1], 1, true, [0.999 0.001] ) %|| occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) = 6;
+            GPS_Breakups = [GPS_Breakups; t];
+            if conglomerate_breakups
+                GPS_Breakups = [GPS_Breakups; (repmat(t,10,1) + (1:1:10)')];
+                conglomerate_breakups = 0;
+            end   
+        end
+        
+        
+        
+        
         if v ~= 0
             counter_nav = counter_nav + 1;
             [P,x_new,y_new,theta_new,flag_energy,vel_max] ...
