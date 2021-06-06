@@ -63,6 +63,13 @@ function create_map
         break;
     end
     
+    % Now it's time to try to load ist breakups to the map
+    try
+        occupancy_matrix = ISTBreakups(file_path, path_img, occupancy_matrix);
+    catch
+        disp("No GPS Breakup zones - They will be randomly generated");
+    end
+    
 %     Now that the user changed everything he wants (if nothing changed the variables are simply loaded in the beginning)
      save(string(file_path + "occupancy_matrix.mat"), 'occupancy_matrix');
      save(string(file_path + "map_information.mat"), '-struct','map_information');
@@ -148,11 +155,6 @@ function create_map
         save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         save(string(folder_path + "stop_signs.mat"), 'stop_signs');
         save(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
-        
-        try 
-            ISTBreakups(folder_path)
-        catch
-        end
         
         %% Picking the start and end points and the intermediate ones
         [pathPoints,path_orientation] = pickPathPoints(occupancy_matrix, folder_path);
