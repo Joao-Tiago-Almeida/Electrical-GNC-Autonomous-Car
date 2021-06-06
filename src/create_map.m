@@ -148,7 +148,12 @@ function create_map
         save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         save(string(folder_path + "stop_signs.mat"), 'stop_signs');
         save(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
-
+        
+        try 
+            ISTBreakups(folder_path)
+        catch
+        end
+        
         %% Picking the start and end points and the intermediate ones
         [pathPoints,path_orientation] = pickPathPoints(occupancy_matrix, folder_path);
 
