@@ -17,11 +17,10 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
         x = xt(1); y = yt(1);
         x_new = x; y_new = y;
         x_old = x; y_old = y;
-        x_odom = x; y_odom = y;
         t = 0; v = 1; phi = 0;
         v_old = v; k_p = 1;
         theta = thetat(1);
-        theta_new = theta; theta_old = theta;
+        theta_new = theta;
         fin = 0;
         P = [0.01^2 0 0 ; 0 0.01^2 0 ;0 0 (0.01*0.1)^2];
         m_dist = 0;
@@ -38,18 +37,13 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
 
             [w_phi, v] = simple_controler_with_v(x_ref-x_new, y_ref-y_new,...
                 wrapToPi(theta_new), phi, v,...
-                difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), theta_safe);
-            x_old = x; y_old = y; theta_old = theta; v_old = v;
+                difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), theta_safe, 5.6);
+            x_old = x; y_old = y; v_old = v;
             [x,y,theta,phi] = robot_simulation(x, y, theta, v, phi, w_phi);
             
-            x_odom = x_odom+error*sin(theta)+(x-x_old);
-            y_odom = y_odom+error*cos(theta)+(y-y_old);
-            theta_odom = theta;
-            
             [P,x_new,y_new,theta_new,~, ...
-            ~,~] = navigation(x,y,theta, ...
-            x_old,y_old, theta_old,... 
-            x_odom,y_odom,theta_odom,P,v,v_old,0,3107, t, x_new, y_new, theta_new, 0);
+            ~] = navigation(x,y,theta, ...
+            x_old,y_old,P,v,v_old,0,3107, t, x_new, y_new, theta_new, 0);
             t = t + 1;
             if( norm([x-xt(end),y-yt(end)]) < 0.3)
                 fin = 1;

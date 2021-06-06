@@ -30,10 +30,10 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
     % Traffic light 
     % if sem is equal to 1 the light is green
     % if sem is equal to 2 the light is red
-    if count1>=1 && count1 < 50
+    if count1>=1 && count1 < 100
      
         sem = 2;          
-    elseif count1>=50 && count1<= 100
+    elseif count1>=100 && count1<= 200
         sem=1;
     end
     
@@ -41,7 +41,7 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
     prob = a + (b-a).*rand(1,1);
     out = randsrc(1,1,[0,1;1-prob,prob]);
     count1 = count1 + 1;
-    if count1 == 100
+    if count1 == 200
         count1=1;
     end
        
@@ -77,18 +77,18 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                         end
 
                                       
-                        flag_passadeira = 1
+                        flag_passadeira = 1;
                     end                             
                     if occupancy_grid(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 3
                          
                         if sem == 1 
-                            disp('Green light');
+%                             disp('Green light');
                             
                             flag_red_ligth = 0;
                         elseif sem == 2
                             
                            
-                             disp('Red light');
+%                              disp('Red light');
                              flag_red_ligth = 1;
                         end
                         
@@ -101,7 +101,7 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                     end
                     if occupancy_grid(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 5
                                                  
-                         flag_Person = 1;
+                         flag_Person = 1
                           x_Person = [x_Person,round(pos_camera(1,index_camera)/resolution)+1];
                           y_Person = [y_Person,round(pos_camera(2,index_camera)/resolution)+1];
                           

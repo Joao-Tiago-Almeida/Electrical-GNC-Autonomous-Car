@@ -1,4 +1,4 @@
-function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, wet, stop, cwalk, person)
+function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, vel_max, wet, stop, cwalk, person)
     global err_w  count_w 
     if ~exist('wet','var')
         wet = false;
@@ -24,7 +24,7 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     dtheta_aux = difference_from_theta(wrapToPi(theta_id),wrapToPi(theta));
     dtheta = (dtheta_in + dtheta_aux)/2;
     phi_id = atan2(L*dtheta, v);
-    if stop || (person && cwalk)
+    if stop || (person && cwalk) || person
         v = 0;
     elseif cwalk
         v = 1;
@@ -41,15 +41,15 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     else
         v = 1;
     end
-    if v > 5.6
-        v = 5.6;
+    if v > vel_max
+        v = vel_max;
     end
     if vant - v > brake_acc/10
         v = vant - brake_acc/10;
     end
     if v < 0
         print('Negative Velocity')
-        exit(0);
+%         exit(0);
     end
     if phi_id > pi/4
         phi_id = pi/4;
