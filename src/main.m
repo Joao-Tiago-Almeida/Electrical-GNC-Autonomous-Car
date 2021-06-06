@@ -25,13 +25,14 @@ my_timer = timer('Name', 'my_timer', 'ExecutionMode', 'fixedRate', 'Period', 0.0
 
 xt = sampled_path(:,1)*map_information.meters_from_MAP;
 yt = sampled_path(:,2)*map_information.meters_from_MAP;
-thetat = theta_generator(xt,yt);                
+thetat = theta_generator(xt,yt);
 
+[b_stp, min_dist] = FindStep(xt, yt, thetat, 1);
 %% Initialization
 
 % Initialize timer
 start(my_timer);
-stp = 0.1;%06; % 0.013 para ist e 0.084 para corrida
+stp = b_stp;%0.1;%06; % 0.013 para ist e 0.084 para corrida
 
 % Initialize Car Exact Position and Old GPS position
 x = xt(1);y = yt(1);theta = thetat(1);
@@ -143,11 +144,11 @@ while ~fin
         
         
         % Controller of the Car
-        theta_safe = TrackPredict(thetat, 0.2, wait_time);
+        theta_safe = TrackPredict(thetat, fixed_sample_rate, wait_time);
         [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
             wrapToPi(theta_new), phi, v,...
             difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)),...
-            theta_safe, wet, stopt);
+            theta_safe, wet, stopt, flag_passadeira, flag_Person);
         v_aux = v;
 
         % Car simulator

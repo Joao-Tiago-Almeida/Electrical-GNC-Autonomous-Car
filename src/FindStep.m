@@ -8,7 +8,7 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
 % The function should be used like:
 % b_stp = FindStep(xt,yt,thetat,error)
 
-    global err_w count_w
+    global err_w count_w fixed_sample_rate
     min_dist = inf;
     wt = waitbar(0,"Running...");
     for stp = 0.001:0.001:0.1
@@ -34,7 +34,7 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
                 break;
             end
             x_ref = point(1); y_ref = point(2);
-            theta_safe = TrackPredict(thetat, 0.2, k_p);
+            theta_safe = TrackPredict(thetat, fixed_sample_rate, k_p);
 
             [w_phi, v] = simple_controler_with_v(x_ref-x_new, y_ref-y_new,...
                 wrapToPi(theta_new), phi, v,...
@@ -59,6 +59,9 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
         if m_dist < min_dist && m_dist ~= 0 
             min_dist = m_dist;
             b_stp = stp;
+        end
+        if min_dist < error/2
+            break;
         end
     end
     close(wt);
