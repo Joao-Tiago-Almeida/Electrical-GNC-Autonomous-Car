@@ -1,30 +1,32 @@
 function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     
-    global debug_mode file_path fixed_sample_rate max_velocity
-    
+    global debug_mode file_path map_velocity fixed_sample_rate
     run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
     [change_points, cluster, cluster_boundaries] = path_segmentation(run_points, checkpoints, meters_from_MAP);
 
     smoothed_path = spline_clusters(change_points, cluster, cluster_boundaries, checkpoints);
     smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
     
-    fixed_sample_rate = 0.02; % meters
+    fixed_sample_rate_1 = 1; % meters
+    sampled_path_1 = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate_1);
+    fixed_sample_rate = 0.05; % meters
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
-    
-    velocity = max_velocity*compute_velocity(sampled_path, fixed_sample_rate);
+   
+    velocity = map_velocity*compute_velocity(sampled_path, fixed_sample_rate);
     
     %% Path analysis
     path_distance = sum(meters_from_MAP*vecnorm(diff(sampled_path) ,2,2));
     mean_velocity = mean(velocity); 
     path_duration = 3.6*path_distance/mean_velocity;    % 1m/s = 3.6 Km/mh
     average_velocity = 3.6*norm(checkpoints(1,:)-checkpoints(end,:))*meters_from_MAP/path_duration;
+    a = diff(sampled_path(end-20:end, :));
     
     disp(" /'----------Path-Smoothing----------'\")
     disp("| Distance:           "   +num2str(path_distance,"%.2f")   +  "  meters.  |")
     disp("| Duration:           "   +num2str(path_duration,"%.2f")   +  "   seconds. |")
     disp("| Mean Velocity:      "   +num2str(mean_velocity,"%.2f")   +  "   Km/h.    |")
-    disp("| Average Velocity:   "   +num2str(average_velocity,"%.2f")+  "   Km/h.    |")
+    disp("| Speed:              "   +num2str(average_velocity,"%.2f")+  "   Km/h.    |")
     disp(" \,----------------------------------,/")
     
     %% Final plots and verifications
@@ -36,13 +38,15 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         hold on
         axis equal
         plot(run_points(:, 1)*meters_from_MAP, run_points(:, 2)*meters_from_MAP, 'r--');
-        plot(smoothed_path(:,1)*meters_from_MAP, smoothed_path(:,2)*meters_from_MAP, 'b-')
-        plot(sampled_path(:,1)*meters_from_MAP, sampled_path(:,2)*meters_from_MAP, 'k.')
-        
+        plot(smoothed_path(:,1)*meters_from_MAP, smoothed_path(:,2)*meters_from_MAP, 'b')
+        plot(sampled_path(:,1)*meters_from_MAP, sampled_path(:,2)*meters_from_MAP, 'k')
+        plot(sampled_path_1(:,1)*meters_from_MAP, sampled_path_1(:,2)*meters_from_MAP, 'g')
+        place_car(sampled_path*meters_from_MAP,0.01, 1);
         legend(["Cluster " + unique(cluster)',...
             'Dijsktra Path',...
             'Smoothed Path',...
-            "Fixed Rate Path at "+num2str(fixed_sample_rate)+" m"],...
+            "Fixed Rate Path at "+num2str(fixed_sample_rate)+" m",...
+            "Fixed Rate Path at "+num2str(fixed_sample_rate_1)+" m"],...
             'Location', 'Best');
         xlabel("meters")
         ylabel("meters")
@@ -51,18 +55,36 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         MAP = openfig(string(file_path+"MAP.fig"));
         %load(string(file_path+"MAP.mat"),'MAP');
         MAP.Name = 'Path Smoothing Velocity';
-        plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",4)
+        plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",3)
         hold on
+        plot(sampled_path(:, 1), sampled_path(:, 2));
         patch([sampled_path(:,1);NaN],[sampled_path(:,2);NaN],[velocity;NaN],...
-            [velocity;NaN],'EdgeColor','interp', 'LineWidth', 4);
+            [velocity;NaN],'EdgeColor','interp', 'LineWidth', 2);
         cb=colorbar;
         cb.TickLabels=cb.TickLabels+" Km/h";
         cb.Position = [0.91 0.05 0.02 0.9];
         colormap(jet);
+        xlim([500 1300]);
+        ylim([500 1300]);
         Image = getframe(gcf);
         imwrite(Image.cdata, string(file_path+"bspline_path.png"), 'png');
+        
+        %%%ALGORITMO DO STOR
+%         npt = length(run_points(:, 1));        % number of via points, including initial and final
+%         x = run_points(:, 1);
+%         y = run_points(:, 2);
+%         nvia = [0:1:npt-1];
+%         csinterp_x = csapi(nvia,x);
+%         csinterp_y = csapi(nvia,y);
+%         h = 0.01;
+%         time = [0:h:npt-1];
+%         xx = fnval(csinterp_x, time);
+%         yy = fnval(csinterp_y, time);
+%         plot(xx,yy)
+        
+        %legend('CheckPoints', 'Our Smoothed Path', 'Matlab Cubic Splines');
     end
-    place_car(sampled_path,1);
+    %place_car(sampled_path,1);
     
 end
 

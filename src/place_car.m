@@ -15,6 +15,13 @@ function plt = place_car(points,duty_cicle,theta_vect,phi_vect,meter_per_pixel)
     % phi_vect: vector of the steering wheel's angle
     global file_path
     
+    if(nargin < 4)
+        meter_per_pixel = theta_vect; %third argument is supposed to be the meter_per_pixel
+        a = diff(points);
+        a = [a; a(end, :)];
+        theta_vect = atan2(a(:, 2),a(:,1));
+        phi_vect = zeros(size(theta_vect));
+    end
     if(nargin<3)
         map_information = load(string(file_path + "map_information.mat"), 'meters_from_MAP');
         meter_per_pixel = map_information.meters_from_MAP;

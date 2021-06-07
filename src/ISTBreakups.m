@@ -21,6 +21,7 @@ function occupancy_matrix = ISTBreakups(folder_path, path_img, occupancy_matrix)
         load(string(folder_path + "cross_walks.mat"), 'cross_walks');
         load(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         load(string(folder_path + "stop_signs.mat"), 'stop_signs');
+        load(string(folder_path + "speed_limits.mat"), 'speed_limits');
         for idx=cross_walks
             h = drawpolygon('Color','w','InteractionsAllowed','none', 'Position', cell2mat(idx));
             h.Color = 'white';
@@ -34,6 +35,11 @@ function occupancy_matrix = ISTBreakups(folder_path, path_img, occupancy_matrix)
         for idx=stop_signs
             h = drawpolygon('Color','r','InteractionsAllowed','none', 'Position', cell2mat(idx));
             h.Color = 'red';
+            h.FaceAlpha = 0.1;
+        end
+        for idx=speed_limits
+            h = drawpolygon('Color','c','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = 'cyan';
             h.FaceAlpha = 0.1;
         end
         %TODO: Load roads and roadmarks to fig

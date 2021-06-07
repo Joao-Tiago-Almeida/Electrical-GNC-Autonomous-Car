@@ -2,8 +2,9 @@
 
 % STARTING FUNCTION to create map, new roads and new path points
 function create_map
-    global occupancy_matrix map_information path_points file_path energy_budget path_orientation
-%     path_img = "../maps/IST_campus.png"; %default map image path
+    global occupancy_matrix map_information path_points file_path energy_budget path_orientation map_velocity limit_velocity
+    limit_velocity = 10; %Default value (only changed if user wants new speed limit zones)
+    %     path_img = "../maps/IST_campus.png"; %default map image path
 %     file_path = "../maps/IST_campus/";
 %     try
 %         occupancy_matrix = load(string(file_path + 'occupancy_matrix.mat'), 'occupancy_matrix');
@@ -55,7 +56,14 @@ function create_map
                 end
             end
         end
-        energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'1.8e8'}));
+        
+        prompt = {'Type the Energy Budget for the Car Travel:', 'Type the Maximum velocity for this map [km/h]:'};
+        final_params = string(inputdlg(prompt,'Parameters',[1 50], {'1.8e8','20'}));
+        final_params = str2double(final_params);
+        energy_budget = final_params(1);
+        map_velocity = final_params(2);
+        
+        %energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'1.8e8'}));
         if energy_budget < 0; energy_budget = 0; end
         
         if((isempty(occupancy_matrix) || isempty(map_information) || isempty(path_points) || isempty(path_orientation)) == true); continue; end
@@ -130,8 +138,9 @@ function create_map
         cross_walks = {};
         traffic_lights = {};
         stop_signs = {};
-        while (user_option ~= 4)
-            user_option = menu('Choose one of the 3 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Im done!');
+        speed_limits = {};
+        while (user_option ~= 5)
+            user_option = menu('Choose one of the 4 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Speed Limit Zone', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
@@ -145,6 +154,10 @@ function create_map
                     stopSign = drawStopSign();
                     stop_signs{end + 1} = stopSign;
                     occupancy_matrix(logical(inpolygon(X, Y, stopSign(:,1)', stopSign(:,2)' ) .* occupancy_matrix)) = 4;
+                case 4
+                    speedLimit = drawSpeedLimit();
+                    speed_limits{end + 1} = speedLimit;
+                    occupancy_matrix(logical(inpolygon(X, Y, speedLimit(:,1)', speedLimit(:,2)' ) .* occupancy_matrix)) = 7;
                 otherwise
             end
         end
@@ -154,8 +167,12 @@ function create_map
         save(string(folder_path + "cross_walks.mat"), 'cross_walks');
         save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         save(string(folder_path + "stop_signs.mat"), 'stop_signs');
+        save(string(folder_path + "speed_limits.mat"), 'speed_limits');
         save(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         
+        if(~isempty(speed_limits))
+            limit_velocity = str2double(inputdlg("Type the Speed Limit for all the limited zones[km/h]",'Speed Limit',[1 40], {'10'}));
+        end
         %% Picking the start and end points and the intermediate ones
         [pathPoints,path_orientation] = pickPathPoints(occupancy_matrix, folder_path);
 
@@ -202,8 +219,9 @@ function create_map
         cross_walks = {};
         traffic_lights = {};
         stop_signs = {};
-        while (user_option ~= 4)
-            user_option = menu('Choose one of the 3 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Im done!');
+        speed_limits = {};
+        while (user_option ~= 5)
+            user_option = menu('Choose one of the 4 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Speed Limit Zone', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
@@ -217,13 +235,23 @@ function create_map
                     stopSign = drawStopSign();
                     stop_signs{end + 1} = stopSign;
                     occupancy_matrix(logical(inpolygon(X, Y, stopSign(:,1)', stopSign(:,2)' ) .* occupancy_matrix)) = 4;
+                case 4
+                    speedLimit = drawSpeedLimit();
+                    speed_limits{end + 1} = speedLimit;
+                    occupancy_matrix(logical(inpolygon(X, Y, speedLimit(:,1)', speedLimit(:,2)' ) .* occupancy_matrix)) = 7;
                 otherwise
             end
         end
+        
+        if(~isempty(speed_limits))
+            limit_velocity = str2double(inputdlg("Type the Speed Limit for all the limited zones[km/h]",'Speed Limit',[1 40], {'10'}));
+        end
+        
         savefig(MAP, string(folder_path + "MAP.fig"), 'compact');
         save(string(folder_path + "cross_walks.mat"), 'cross_walks');
         save(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         save(string(folder_path + "stop_signs.mat"), 'stop_signs');
+        save(string(folder_path + "speed_limits.mat"), 'speed_limits');
         close;
     end
 
@@ -341,6 +369,7 @@ function create_map
         load(string(folder_path + "cross_walks.mat"), 'cross_walks');
         load(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
         load(string(folder_path + "stop_signs.mat"), 'stop_signs');
+        load(string(folder_path + "speed_limits.mat"), 'speed_limits');
         for idx=cross_walks
             h = drawpolygon('Color','w','InteractionsAllowed','none', 'Position', cell2mat(idx));
             h.Color = 'white';
@@ -354,6 +383,11 @@ function create_map
         for idx=stop_signs
             h = drawpolygon('Color','r','InteractionsAllowed','none', 'Position', cell2mat(idx));
             h.Color = 'red';
+            h.FaceAlpha = 0.1;
+        end
+        for idx=speed_limits
+            h = drawpolygon('Color','c','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = 'cyan';
             h.FaceAlpha = 0.1;
         end
         
@@ -448,6 +482,16 @@ function create_map
         h.FaceAlpha = 0.1;
         %h.Label = 'Traffic Light';
         trafficLight = h.Position;
+    end
+
+ function speedLimit = drawSpeedLimit
+        disp("Draw in the map one speed limit zone by drawing the region");
+        h = drawpolygon('Color','c','InteractionsAllowed','none');
+
+        h.Color = 'cyan';
+        h.FaceAlpha = 0.1;
+        %h.Label = 'Speed Limit';
+        speedLimit = h.Position;
     end
 
     

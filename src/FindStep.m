@@ -55,7 +55,11 @@ function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
                 fin = 1;
             end
         end
-        waitbar(stp/0.1,wt,"Running...");
+        if rem(stp,0.002)*1e3
+            waitbar(stp/0.1,wt,"Running...:P");
+        else
+            waitbar(stp/0.1,wt,"Running...:D");
+        end
         if m_dist < min_dist && m_dist ~= 0 
             min_dist = m_dist;
             b_stp = stp;

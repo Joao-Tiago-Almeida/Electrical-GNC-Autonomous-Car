@@ -5,20 +5,34 @@ clc;
 
 %% Guidance
 
-global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity energy_budget
+global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity 
+global energy_budget map_velocity
 
-m_vel_kmh = 20; %Km/h
-max_velocity = m_vel_kmh/3.6; %m/s
 debug_mode = false;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation);
+max_velocity = map_velocity/3.6; %m/s
 
 %% Control and Navigation
 
 % Timer initialize
-global start_v err_w count_w countstop countgo
+global start_v err_w count_w countstop countgo duration_people orientation_people initialPoint_people people_walk
+
 start_v = 0;err_w = 0;count_w = 0;countstop = 0;countgo = 0;
+
+% Testar e depois apagar!!!!!!!!!!!!!!!!!!!!!11
+duration_people = [10 5];
+orientation_people = [pi pi];
+
+initialPoint_people = [470 470 ;1080 1100];
+Number_of_people =length(orientation_people);
+for npeople =1:Number_of_people
+    people_walk{npeople} = people_path(npeople);
+end
+
+
+    %%
 
 my_timer = timer('Name', 'my_timer', 'ExecutionMode', 'fixedRate', 'Period', 0.01, ...
                     'StartFcn', @(x,y)disp('started...'), ...
@@ -91,9 +105,10 @@ load 'Initialize_Sensors_flags.mat';
 % Create camera
 [x_camera,y_camera]= camera;
 count = 1;
-index_pessoa=0;
 
 count1 = 1;
+count2=1;
+
 x_people1 = people1(1,:);y_people1=people1(2,:);
 x_people2 = people2(1,:);y_people2=people2(2,:);
 object_x_old = -1;
@@ -165,6 +180,24 @@ while ~fin
             h=msgbox('Crosswalk detected',...
             'Camera','custom',icondata,iconcmap);
             count=0;
+        elseif flag_stopSignal && count ==1
+            [icondata,iconcmap] = imread(string(file_path+"stop.jpg")); 
+            h=msgbox('Stop Signal detected',...
+            'Camera','custom',icondata,iconcmap);
+            count=0;
+        end
+        if flag_Person && count2==1
+            if exist('h','var')
+                delete(h)
+            end
+            [icondata,iconcmap] = imread(string(file_path+"person.png")); 
+            h=msgbox('Person detected',...
+            'Camera','custom',icondata,iconcmap);
+            count2=0;
+        elseif flag_Person==0 &&count2==0
+            delete(h)
+            count=1;
+            count2=1;
         end
         
 
@@ -226,10 +259,10 @@ while ~fin
         
         % Lidar Sensors
 %         
-[occupancy_matrix,flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
-            flag_stopSignal,count1,index_pessoa,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
+[flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
+            flag_stopSignal,count1,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
             y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
-            people1,people2,occupancy_matrix,count1,index_pessoa,cantos_0,map_information.meters_from_MAP,v,flag_stopSignal,...
+            people1,people2,count1,cantos_0,v,flag_stopSignal,...
             flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 );
 
         
@@ -240,10 +273,10 @@ while ~fin
             disp('Car crash - Stopping the program');
             break;
         end
-%         if flag_Inerent_collision && v == 0
-%             disp('Car is unable to follow this path');
-%             break;
-%         end
+        if flag_Inerent_collision && v == 0 && ~flag_Person
+            disp('Car is unable to follow this path');
+            break;
+        end
         if vel_max < 1
             disp('Energy budget too low - Stopping the program');
             break;
@@ -257,9 +290,10 @@ while ~fin
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
     
     pause(0.075);
-    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0)
+    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0)
         delete(h);
         count=1;
+        count2=1;
     end
 end
 toc

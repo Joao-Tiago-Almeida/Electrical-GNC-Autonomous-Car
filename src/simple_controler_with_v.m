@@ -70,9 +70,6 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     elseif phi_id == -pi/4 && phi > pi/16
         phi_id = pi/4;
     end
-    if turn_now
-        phi_id = -phi;
-    end
     if v == 0
         ws = 0;
         return;

@@ -11,7 +11,8 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         yx_2_idx_graph idx_graph_2_xy ...
         m_occupancy m_safe  ...
         node_location heap directions ...
-        debug_mode file_path plan_debug;
+        debug_mode file_path plan_debug ...
+        map_velocity;
     %global path_points path_orientation
     
     plan_debug = false; % intermedium plots 
@@ -48,7 +49,9 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
     % change to symmatric matrix since it is a minimization problem
     m_occupancy = occupancy_matrix;
-    m_occupancy(logical(m_occupancy<3 .* m_occupancy>4))=1;  % ignoring crosswalks people and gps signs
+%     m_occupancy(logical(m_occupancy<3 .* m_occupancy>4))=1;  % ignoring crosswalks people and gps signs
+    m_occupancy(m_occupancy>4)=1;
+    m_occupancy(m_occupancy==2)=1;
     m_occupancy(m_occupancy==3)=0.9;% slown down on traffic lights (the less, the lighter)
     m_occupancy(m_occupancy==4)=0;  % stop in Stop sings
     m_safe = 1-safe_matrix/max(max(safe_matrix));
@@ -156,10 +159,9 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     end
     
     %% Path analysis
-    max_velocity=30; %Km/h
     n_points = length(path_data);
     path_distance = gap_between_cells*path_data(end,5)*map_information.meters_from_MAP;
-    mean_velocity = max_velocity*sum(path_data(:,4))/n_points; 
+    mean_velocity = map_velocity*sum(path_data(:,4))/n_points; 
     path_duration = 3.6*path_distance/mean_velocity;    % 1m/s = 3.6 Km/mh
     average_velocity = 3.6*gap_between_cells*norm(points_grid(1,:)-points_grid(end,:))*map_information.meters_from_MAP/path_duration;
 
@@ -168,7 +170,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     disp("| Distance:           "   +num2str(path_distance,"%.2f")   +  "  meters.  |")
     disp("| Duration:           "   +num2str(path_duration,"%.2f")   +  "   seconds. |")
     disp("| Mean Velocity:      "   +num2str(mean_velocity,"%.2f")   +  "   Km/h.    |")
-    disp("| Average Velocity:   "   +num2str(average_velocity,"%.2f")+  "   Km/h.    |")
+    disp("| Speed:              "   +num2str(average_velocity,"%.2f")+  "   Km/h.    |")
     disp(" \,----------------------------------,/")
     
     %% transpose to the original map
@@ -193,7 +195,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     %% Final plots and verifications
     if(debug_mode==true)
-        inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
+        inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, map_velocity)
         disp("[EOF] Path Planning")
         license('inuse')
         %[fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');
@@ -202,7 +204,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 end
 
 %% Visual Support Content
-function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
+function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, map_velocity)
 % This functions displays in figures the path planned
     
     global map_information file_path safe_debug
@@ -212,14 +214,16 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     hold on
     plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",4)
     patch([run_points(:,1);NaN],[run_points(:,2);NaN],[path_data(:,4);NaN],...
-        [max_velocity*path_data(:,4);NaN],'EdgeColor','interp',"Linewidth",4);
+        [map_velocity*path_data(:,4);NaN],'EdgeColor','interp',"Linewidth",2);
     cb=colorbar;
     cb.TickLabels=cb.TickLabels+" Km/h";
     cb.Position = [0.91 0.05 0.02 0.9];
     colormap(jet);
+    xlim([500 1300]);
+    ylim([500 1300]);
     Image = getframe(gcf);
     imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
-    place_car(run_points,10);
+    %place_car(run_points,10);
     
     if(safe_debug==false); return; end
     
