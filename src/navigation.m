@@ -44,7 +44,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     %% Prediction Phase
 
     %% Process State
-    Norma = norm([x_GPS y_GPS]-[x_past_GPS y_past_GPS]);
+    Norma = norm([x_GPS y_GPS]-[x_past_GPS y_past_GPS]); %+ norm([x_GPS y_GPS]-[x_past_GPS y_past_GPS])*(10^(-5))*((rand(1,1) > 0.5)*2 - 1);
     x_new = x_new_old + Norma*cos(theta_new_old);
     y_new = y_new_old + Norma*sin(theta_new_old);
     theta_new = theta_teo+ theta_teo*(10^(-5))*((rand(1,1) > 0.5)*2 - 1);
@@ -80,7 +80,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     end
     %% Gaussian error of 0.0001%
 
-    u = [y_theory(1)*(10^(-6))*((rand(1,1) > 0.5)*2 - 1);y_theory(2)*(10^(-7))*((rand(1,1) > 0.5)*2 - 1)];
+    u = [y_theory(1)*(10^(-5))*((rand(1,1) > 0.5)*2 - 1);y_theory(2)*(10^(-5))*((rand(1,1) > 0.5)*2 - 1)];
     % remove if NaN
     u(isnan(u)) = 0;
     y = y_theory + u - y_hat ;

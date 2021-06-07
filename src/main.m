@@ -5,10 +5,10 @@ clc;
 
 %% Guidance
 
-global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity
+global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity energy_budget
 
 max_velocity=30; %Km/h
-debug_mode = true;
+debug_mode = false;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation);
@@ -75,7 +75,7 @@ wait_time = 1;
 % Initialize Estimate Covariance of the EKF
 
 P = [0.01^2 0 0 ; 0 0.01^2 0 ;0 0 (0.01*0.1)^2];
-E = 1e6;
+E = energy_budget;
 P0 = 2000;
 Energy_wasted = 0;
 flag_energy = 0;
@@ -188,7 +188,7 @@ while ~fin
         y_odom = y_odom+error*cos(theta)+(y-y_old);
         theta_odom = theta;
         
-        if randsample( [0 1], 1, true, [0.999 0.001] ) %|| occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) = 6;
+        if randsample( [0 1], 1, true, [0.999 0.001] ) || occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) == 6
             GPS_Breakups = [GPS_Breakups; t];
             if conglomerate_breakups
                 GPS_Breakups = [GPS_Breakups; (repmat(t,10,1) + (1:1:10)')];

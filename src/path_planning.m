@@ -11,8 +11,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         yx_2_idx_graph idx_graph_2_xy ...
         m_occupancy m_safe  ...
         node_location heap directions ...
-        debug_mode file_path plan_debug...
-	max_velocity;
+        debug_mode file_path plan_debug;
     %global path_points path_orientation
     
     plan_debug = false; % intermedium plots 
@@ -49,7 +48,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
 
     % change to symmatric matrix since it is a minimization problem
     m_occupancy = occupancy_matrix;
-    m_occupancy(m_occupancy==2)=1;  % ignoring crosswalks
+    m_occupancy(logical(m_occupancy<3 .* m_occupancy>4))=1;  % ignoring crosswalks people and gps signs
     m_occupancy(m_occupancy==3)=0.9;% slown down on traffic lights (the less, the lighter)
     m_occupancy(m_occupancy==4)=0;  % stop in Stop sings
     m_safe = 1-safe_matrix/max(max(safe_matrix));
@@ -157,6 +156,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     end
     
     %% Path analysis
+    max_velocity=30; %Km/h
     n_points = length(path_data);
     path_distance = gap_between_cells*path_data(end,5)*map_information.meters_from_MAP;
     mean_velocity = max_velocity*sum(path_data(:,4))/n_points; 
@@ -177,6 +177,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     % there are not suficient number of points
     if(length(valid_points)<2);return;end
+    
 
     %% validate checkpoints
     checkpoints=path_points(valid_points,:);
@@ -191,8 +192,8 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     
     %% Final plots and verifications
-    if(debug_mode == true)
-        %inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
+    if(debug_mode==true)
+        inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, max_velocity)
         disp("[EOF] Path Planning")
         license('inuse')
         %[fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');
@@ -242,10 +243,10 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
         return
     end
 
-%     figure('WindowStyle', 'docked');
-%     lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
-%     lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
-%     geoplot(lat,lon,'g-*')
+    figure('WindowStyle', 'docked');
+    lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
+    lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
+    geoplot(lat,lon,'g-*')
 
     %% Web map
     % webmap
@@ -531,8 +532,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
-        safe_distance = 0.5;    % meters
-        forbidden_zone = 1;  % meters
+        safe_distance = 5;    % meters
+        forbidden_zone = 1.5;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
@@ -573,7 +574,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     safe_matrix = round(Ch*normalize .* safe_matrix_aux);
     save(string(file_path+"safe_matrix.mat"), 'safe_matrix');
     
-    if((debug_mode || plan_debug)==false);return;end
+    if((debug_mode && plan_debug)==false);return;end
     
     %% view
     
