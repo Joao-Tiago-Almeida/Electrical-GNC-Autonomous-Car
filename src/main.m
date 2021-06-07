@@ -91,6 +91,7 @@ load 'Initialize_Sensors_flags.mat';
 % Create camera
 [x_camera,y_camera]= camera;
 count = 1;
+count2=1;
 index_pessoa=0;
 
 count1 = 1;
@@ -170,6 +171,17 @@ while ~fin
             h=msgbox('Stop Signal detected',...
             'Camera','custom',icondata,iconcmap);
             count=0;
+        end
+        if flag_Person && count2==1
+            delete(h)
+            [icondata,iconcmap] = imread(string(file_path+"person.png")); 
+            h=msgbox('Person detected',...
+            'Camera','custom',icondata,iconcmap);
+            count2=0;
+        elseif flag_Person==0 &&count2==0
+            delete(h)
+            count=1;
+            count2=1;
         end
         
 
@@ -262,9 +274,10 @@ while ~fin
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
     
     pause(0.075);
-    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0)
+    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 )
         delete(h);
         count=1;
+        count2=1;
     end
 end
 toc
