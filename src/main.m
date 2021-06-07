@@ -165,6 +165,11 @@ while ~fin
             h=msgbox('Crosswalk detected',...
             'Camera','custom',icondata,iconcmap);
             count=0;
+        elseif flag_stopSignal && count ==1
+            [icondata,iconcmap] = imread(string(file_path+"stop.jpg")); 
+            h=msgbox('Stop Signal detected',...
+            'Camera','custom',icondata,iconcmap);
+            count=0;
         end
         
 
@@ -257,7 +262,7 @@ while ~fin
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
     
     pause(0.075);
-    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0)
+    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0)
         delete(h);
         count=1;
     end
