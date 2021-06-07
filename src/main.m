@@ -4,8 +4,8 @@ clc;
 
 %% Guidance
 
-global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity
-debug_mode = false
+global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity energy_budget
+debug_mode = false;
 max_velocity=30; %Km/h
 debug_mode = true;
 create_map
@@ -67,7 +67,7 @@ wait_time = 1;
 % Initialize Estimate Covariance of the EKF
 
 P = [0.01^2 0 0 ; 0 0.01^2 0 ;0 0 (0.01*0.1)^2];
-E = 1e6;
+E = energy_budget;
 P0 = 2000;
 Energy_wasted = 0;
 flag_energy = 0;
@@ -100,7 +100,7 @@ GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
-MAP_real_time = openfig(string(file_path+"MAP.fig"));;
+MAP_real_time = openfig(string(file_path+"MAP.fig"));
 MAP_real_time.Name = "O puto tÃ¡ aÃ­ nos drifts -> piu piu";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
