@@ -1,4 +1,4 @@
-function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
+function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
 % This function finds the best stp for simulation. 
 % The arguments it expects are:
 % xt - the vector with the x coordinates of the path
@@ -14,6 +14,7 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
     for stp = 0.001:0.001:0.1
         err_w = 0;
         count_w = 0;
+        vld = 1;
         x = xt(1); y = yt(1);
         x_new = x; y_new = y;
         x_old = x; y_old = y;
@@ -30,6 +31,7 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
                 m_dist = distance;
             end
             if distance > error
+                vld = 0;
                 break;
             end
             x_ref = point(1); y_ref = point(2);
@@ -53,6 +55,7 @@ function [b_stp, min_dist] = FindStep(xt, yt, thetat, error)
         if m_dist < min_dist && m_dist ~= 0 
             min_dist = m_dist;
             b_stp = stp;
+            valid = vld;
         end
         if min_dist < error/2
             break;

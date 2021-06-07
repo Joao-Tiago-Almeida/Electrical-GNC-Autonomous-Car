@@ -10,7 +10,7 @@ function [point, dist, theta, k_p] = dist_to_traj(posx, posy, trajx, trajy, traj
         if distt < dist
             dist = distt;
             k_p = k;
-            passe = k+ceil(jump);%6 para o testing robot
+            passe = k+ceil(jump);
             if passe > length(trajx)
                 passe = length(trajx);
             end

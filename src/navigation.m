@@ -34,7 +34,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
         paraporfavor = 1;
     end
 
-    disp(vel_max);
+%     disp(vel_max);
 
     %% Extended Kalman Filter
 

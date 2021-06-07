@@ -1,5 +1,5 @@
 function flag = check_collision(V_car,theta_car,x0_car,y0_car,V_object,theta_object,x0_object,y0_object)
- 
+
  % X and Y components for the car's velocity
  Vx_car = V_car*cos(theta_car);
  Vy_car = V_car*sin(theta_car);
@@ -29,8 +29,9 @@ function flag = check_collision(V_car,theta_car,x0_car,y0_car,V_object,theta_obj
      % coordinates of the point in the middle of the car's front, we need
      % to consider a circunference around this point to cover the possibility
      % of a collision around other points.
-     if d < 1.0630
-         flag = 1;  
+     if d < 1.0630-(1.0630/(11-index_pos))
+         flag = 1;
+         break;
      else
          flag = 0;
      end

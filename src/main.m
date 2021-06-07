@@ -1,3 +1,4 @@
+delete(timerfindall)
 clear all;
 close all;
 clc;
@@ -5,7 +6,7 @@ clc;
 %% Guidance
 
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity
-debug_mode = false
+
 max_velocity=30; %Km/h
 debug_mode = true;
 create_map
@@ -15,26 +16,33 @@ create_map
 %% Control and Navigation
 
 % Timer initialize
-global start_v  err_w  count_w 
-start_v = 0;err_w = 0;count_w = 0;
+global start_v err_w count_w countstop countgo
+start_v = 0;err_w = 0;count_w = 0;countstop = 0;countgo = 0;
 
 my_timer = timer('Name', 'my_timer', 'ExecutionMode', 'fixedRate', 'Period', 0.01, ...
                     'StartFcn', @(x,y)disp('started...'), ...
                     'StopFcn', @(x,y)disp('stopped...'), ...
                     'TimerFcn', @my_start_fcn);
 % Path from guidance
+Rini = wrapToPi(deg2rad(path_orientation));
 
 xt = sampled_path(:,1)*map_information.meters_from_MAP;
 yt = sampled_path(:,2)*map_information.meters_from_MAP;
 thetat = theta_generator(xt,yt);
-
-[b_stp, min_dist] = FindStep(xt, yt, thetat, 1);
+thetat(1) = -Rini(1); thetat(end) = -Rini(2);
+valid = 0; thderror = 1;
+while ~valid && thderror <= 4
+    [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, thderror);
+    thderror = thderror*2;
+end
+% b_stp = 0.015;
 t_pred = It_Prediction(length(xt));
 %% Initialization
 
 % Initialize timer
 start(my_timer);
 stp = b_stp;%0.1;%06; % 0.013 para ist e 0.084 para corrida
+end_stop = -1;
 
 % Initialize Car Exact Position and Old GPS position
 x = xt(1);y = yt(1);theta = thetat(1);
@@ -47,7 +55,7 @@ x_new = x;y_new = y;theta_new = theta;
 x_odom = x;y_odom = y;
 
 % Initialize Iterations Counter
-t = 0; counter_nav = 0;
+t = 0; counter_nav = 0; counter_col = 0;
 fin = 0;
 
 % Initialize Exact Velocity
@@ -100,8 +108,8 @@ GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
-MAP_real_time = openfig(string(file_path+"MAP.fig"));;
-MAP_real_time.Name = "O puto tÃ¡ aÃ­ nos drifts -> piu piu";
+MAP_real_time = openfig(string(file_path+"MAP.fig"));
+MAP_real_time.Name = "Real Time Simulation";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
 
@@ -116,18 +124,32 @@ while ~fin
             debug = 1
             %break;
         end
-        % If the energy is zero, then stop the car
         
-        if t == 190
+        if t == 145
             pause_please = 1;
         end
         
-        %% alteraÃ§Ã£o com a branco e a r
+        % alteraÃ§Ã£o com a branco e a r
         if flag_Inerent_collision
+%             if counter_col == 0
+%                 turn_now = true;
+%             else
+%                 turn_now = false;
+%             end
+%             counter_col = counter_col + 1;
+%             if counter_col == 10
+%                 counter_col = 0;
+%             end
             disp("Colisão inerente: mudar direção")
+%         else
+%             turn_now = false;
+%             counter_col = 0;
+        end
+        if length(xt) - wait_time < 2/fixed_sample_rate
+            end_stop = length(xt)-wait_time;
         end
         
-        if flag_energy || flag_red_ligth
+        if flag_energy || flag_red_ligth || flag_stopSignal || flag_Inerent_collision
             stopt = true;
         else
             stopt = false;
@@ -145,13 +167,13 @@ while ~fin
         end
         
 
-        
+        vel_max = 5.6;
         % Controller of the Car
         theta_safe = TrackPredict(thetat, fixed_sample_rate, wait_time);
         [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
             wrapToPi(theta_new), phi, v,...
             difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)),...
-            theta_safe, vel_max, wet, stopt, flag_passadeira, flag_Person);
+            theta_safe, vel_max, wet, stopt, flag_passadeira, flag_Person, end_stop);
         v_aux = v;
 
         % Car simulator
@@ -201,16 +223,24 @@ while ~fin
         
         % Lidar Sensors
 %         
-[flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
+[occupancy_matrix,flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
             flag_stopSignal,count1,index_pessoa,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
             y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
             people1,people2,occupancy_matrix,count1,index_pessoa,cantos_0,map_information.meters_from_MAP,v,flag_stopSignal,...
             flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 );
 
-
+        
         error_odom(1,t) = x_odom;
         error_odom(2,t) = y_odom;
         error_odom(3,t) = theta_odom;
+        if flag_stop_car
+            disp('Car crash');
+            break;
+        end
+        if flag_Inerent_collision && v == 0
+            disp('Car is unable to follow this path');
+            break;
+        end
         start_v = 0;
         if( norm([x-xt(end),y-yt(end)]) < 0.3)
             fin = 1;
@@ -262,8 +292,8 @@ ylabel('Error','FontSize',12,'FontName','Arial');
 xlabel('iterations','FontSize',12,'FontName','Arial');
 
 %%
-MAP_control = load(string(file_path+"MAP.mat"),'MAP');
-MAP_control.MAP.Name = 'control';
+MAP_control = openfig(string(file_path+"MAP.fig"));
+MAP_control.Name = 'control';
 hold on
 place_car([xp',yp']/map_information.meters_from_MAP,3,thetapt,phip,map_information.meters_from_MAP);
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
