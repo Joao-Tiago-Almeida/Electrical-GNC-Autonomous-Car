@@ -68,7 +68,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
 
     if Flag_GPS_Breakup      
         %% If we decide to use the Prediction Model with odometry
-        %y_theory = [norm([IMU_data(i,1) IMU_data(i,2)]);atan(IMU_data(i,2)/IMU_data(i,1))];
+%         y_theory = [norm([x_new y_new]);atan2((y_odom-y_past_odom),(x_odom-x_past_odom))];
         %% If we decide to not use odometry and only use the Prediction Step
         return;
     end
