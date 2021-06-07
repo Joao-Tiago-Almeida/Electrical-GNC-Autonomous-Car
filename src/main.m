@@ -105,7 +105,6 @@ load 'Initialize_Sensors_flags.mat';
 % Create camera
 [x_camera,y_camera]= camera;
 count = 1;
-
 count1 = 1;
 count2=1;
 
