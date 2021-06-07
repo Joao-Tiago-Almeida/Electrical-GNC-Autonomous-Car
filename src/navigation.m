@@ -80,7 +80,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     end
     %% Gaussian error of 0.0001%
 
-    u = [y_theory(1)*(10^(-6))*((rand(1,1) > 0.5)*2 - 1);y_theory(2)*(10^(-7))*((rand(1,1) > 0.5)*2 - 1)];
+    u = [y_theory(1)*(10^(-5))*((rand(1,1) > 0.5)*2 - 1);y_theory(2)*(10^(-5))*((rand(1,1) > 0.5)*2 - 1)];
     % remove if NaN
     u(isnan(u)) = 0;
     y = y_theory + u - y_hat ;
