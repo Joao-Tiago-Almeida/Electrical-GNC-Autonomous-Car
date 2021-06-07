@@ -27,8 +27,6 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
         vel_max = max_velocity;
     end
 
-    disp(vel_max);
-
     %% Extended Kalman Filter
 
     Q = eye(3).*0.1;
