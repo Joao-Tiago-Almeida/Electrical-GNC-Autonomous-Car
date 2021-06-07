@@ -50,6 +50,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     % change to symmatric matrix since it is a minimization problem
     m_occupancy = occupancy_matrix;
     m_occupancy(m_occupancy==2)=1;  % ignoring crosswalks
+    m_occupancy(m_occupancy==6)=1;  % ignoring gps breakups
     m_occupancy(m_occupancy==3)=0.9;% slown down on traffic lights (the less, the lighter)
     m_occupancy(m_occupancy==4)=0;  % stop in Stop sings
     m_safe = 1-safe_matrix/max(max(safe_matrix));

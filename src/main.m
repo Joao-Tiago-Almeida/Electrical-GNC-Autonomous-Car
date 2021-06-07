@@ -166,7 +166,7 @@ while ~fin
         y_odom = y_odom+error*cos(theta)+(y-y_old);
         theta_odom = theta;
         
-        if randsample( [0 1], 1, true, [0.999 0.001] ) %|| occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) = 6;
+        if randsample( [0 1], 1, true, [0.999 0.001] ) || occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) == 6
             GPS_Breakups = [GPS_Breakups; t];
             if conglomerate_breakups
                 GPS_Breakups = [GPS_Breakups; (repmat(t,10,1) + (1:1:10)')];
