@@ -51,7 +51,7 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
         v = vel_max;
     end
     if end_stop ~= -1
-        v = 1 * end_stop/(2/fixed_sample_rate);
+        v = 1 * end_stop/(2/fixed_sample_rate) + 0.1;
     end
     if vant - v > brake_acc/10
         v = vant - brake_acc/10;

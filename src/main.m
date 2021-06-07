@@ -7,7 +7,8 @@ clc;
 
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity energy_budget
 
-max_velocity=30; %Km/h
+m_vel_kmh = 20; %Km/h
+max_velocity = m_vel_kmh/3.6; %m/s
 debug_mode = false;
 create_map
 
@@ -76,7 +77,7 @@ wait_time = 1;
 
 P = [0.01^2 0 0 ; 0 0.01^2 0 ;0 0 (0.01*0.1)^2];
 E = energy_budget;
-P0 = 2000;
+P0 = 1000;
 Energy_wasted = 0;
 flag_energy = 0;
 wet = false;
@@ -167,7 +168,7 @@ while ~fin
         end
         
 
-        vel_max = 5.6;
+%         vel_max = 5.6;
         % Controller of the Car
         theta_safe = TrackPredict(thetat, fixed_sample_rate, wait_time);
         [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
@@ -183,7 +184,8 @@ while ~fin
         x_aux = x;
         y_aux = y;
         theta_aux = theta;
-
+        x_odom_old = x_odom;
+        y_odom_old = y_odom;
         x_odom = x_odom+error*sin(theta)+(x-x_old);
         y_odom = y_odom+error*cos(theta)+(y-y_old);
         theta_odom = theta;
@@ -203,7 +205,8 @@ while ~fin
             counter_nav = counter_nav + 1;
             [P,x_new,y_new,theta_new,flag_energy,vel_max] ...
                 = navigation(x,y,theta,x_old,y_old,...
-                P,v,v_old,E,t_pred, counter_nav, x_new, y_new, theta_new,any(GPS_Breakups(:) == t));
+                P,E,t_pred, counter_nav, x_new, y_new, theta_new,any(GPS_Breakups(:) == t),...
+                x_odom_old, y_odom_old, x_odom, y_odom);
         end
         % Past GPS position
         x_old = x_aux;
@@ -234,15 +237,19 @@ while ~fin
         error_odom(2,t) = y_odom;
         error_odom(3,t) = theta_odom;
         if flag_stop_car
-            disp('Car crash');
+            disp('Car crash - Stopping the program');
             break;
         end
-        if flag_Inerent_collision && v == 0
-            disp('Car is unable to follow this path');
+%         if flag_Inerent_collision && v == 0
+%             disp('Car is unable to follow this path');
+%             break;
+%         end
+        if vel_max < 1
+            disp('Energy budget too low - Stopping the program');
             break;
         end
         start_v = 0;
-        if( norm([x-xt(end),y-yt(end)]) < 0.3)
+        if( norm([x-xt(end),y-yt(end)]) < 0.5)
             fin = 1;
         end
     end    

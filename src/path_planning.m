@@ -532,8 +532,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
-        safe_distance = 5;    % meters
-        forbidden_zone = 1.5;  % meters
+        safe_distance = 0.5;    % meters
+        forbidden_zone = 1;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
