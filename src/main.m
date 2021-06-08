@@ -8,7 +8,7 @@ clc;
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity 
 global energy_budget map_velocity
 
-debug_mode = false;
+debug_mode = true;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation);
@@ -87,6 +87,9 @@ error = 0.005;
 % Path counter
 wait_time = 1;
 
+% colisions
+colision = 0;
+
 % Initialize Estimate Covariance of the EKF
 
 P = [0.01^2 0 0 ; 0 0.01^2 0 ;0 0 (0.01*0.1)^2];
@@ -128,6 +131,13 @@ MAP_real_time.Name = "Real Time Simulation";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
 
+wt = waitbar(1,"Energy...");
+set(wt,'Name','Energy Variation In Percentage');
+ % find the patch object
+ hPatch = findobj(wt,'Type','Patch');
+ % change the edge and face to blue
+ set(hPatch,'FaceColor','b', 'EdgeColor','w')
+
 tic
 while ~fin
     Flag_GPS_Breakup = 0;
@@ -164,7 +174,7 @@ while ~fin
             end_stop = length(xt)-wait_time;
         end
         
-        if flag_energy || flag_red_ligth || flag_stopSignal || flag_Inerent_collision
+        if flag_energy || flag_red_ligth || flag_stopSignal %|| flag_Inerent_collision
             stopt = true;
         else
             stopt = false;
@@ -206,7 +216,7 @@ while ~fin
         [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
             wrapToPi(theta_new), phi, v,...
             difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)),...
-            theta_safe, vel_max, wet, stopt, flag_passadeira, flag_Person, end_stop);
+            theta_safe, vel_max, wet, stopt, flag_passadeira||flag_Inerent_collision, flag_Person, end_stop);
         v_aux = v;
 
         % Car simulator
@@ -269,8 +279,12 @@ while ~fin
         error_odom(2,t) = y_odom;
         error_odom(3,t) = theta_odom;
         if flag_stop_car
-            disp('Car crash - Stopping the program');
-            break;
+%             disp('Car crash - Stopping the program');
+            [icondata,iconcmap] = imread(string(file_path+"crash.jpg")); 
+            h=msgbox('Car crash',...
+         'There was a crash','custom',icondata,iconcmap);
+            count=0;
+            colision = colision + 1;
         end
         if flag_Inerent_collision && v == 0 && ~flag_Person
             disp('Car is unable to follow this path');
@@ -287,6 +301,7 @@ while ~fin
     end    
     if(t>1); delete(plt); end
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
+    waitbar(E/energy_budget,wt,sprintf("Energy... %f", (E/energy_budget)*100));
     
     pause(0.075);
     if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0)
@@ -296,6 +311,10 @@ while ~fin
     end
 end
 toc
+
+%% Close Energy Display
+
+close(wt);
 
 %% For the Plot of GPS_Breakups
 
