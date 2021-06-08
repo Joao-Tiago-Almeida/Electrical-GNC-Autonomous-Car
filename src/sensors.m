@@ -1,18 +1,25 @@
-function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,flag_stopSignal,count1,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]...
-    = sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera,y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,...
+function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,flag_stopSignal,count1,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]...
+    = sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera,y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,speedlimit_signal,...
     people1,people2,count1,cantos_0,v,flag_stopSignal,flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 )
     
-    global occupancy_matrix plot_camera countstop countgo pltpeople1 pltpeople2 max_velocity map_information
-        
-    global orientation_people people_walk limit_velocity map_velocity
+    % Map information
+    global occupancy_matrix max_velocity map_information orientation_people limit_velocity
     
-    persistent index_pessoa index_random_people pltpeopleRandom
+    % Other variables 
+    global Ncollision  countstop countgo people_walk
+    
+    % Global for plots
+    global plot_camera pltpeople1 pltpeople2 plot_lidar 
+    
+    % Variables used only inside this function
+    persistent index_pessoa index_random_people pltpeopleRandom old_people 
     
     if isempty(index_pessoa)
         index_pessoa = 0;
     end
     if isempty(index_random_people)
         index_random_people = zeros(1,length(orientation_people));
+        old_people = zeros(1,length(orientation_people));
         pltpeopleRandom = cell(1,length(orientation_people));
     end
     resolution = map_information.meters_from_MAP;
@@ -35,6 +42,9 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
         end
     end
     
+    if exist('plot_lidar','var')
+        delete(plot_lidar);
+    end
     
     % Person variable Init
     x_Person =[];
@@ -57,6 +67,9 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
     
     pos = R*[x_lidar;y_lidar] + [posx_carsFront;posy_carsFront];
     pos_camera = R*[x_camera;y_camera] + [posx_carsFront;posy_carsFront];
+    
+    plot_camera = plot(round(pos_camera(1,:)/resolution)+1,round(pos_camera(2,:)/resolution)+1,'g*');
+    plot_lidar = plot(round(pos(1,:)/resolution)+1,round(pos(2,:)/resolution)+1,'m*');
     
     % update position of 4 corners of the car
     cantos = R*cantos_0 + [x;y];
@@ -126,11 +139,15 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                         end
                                                 
                     end
+                    
+                    % Stop signal detected
                     if occupancy_matrix(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 4
                                                   
                       flag_stopSignal = 1;
 %                       disp('Stop');
                     end
+                    
+                    % Person detected
                     if occupancy_matrix(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 5
                                                  
                          flag_Person = 1;
@@ -143,11 +160,12 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                     end
                     % Speed limit
                     if occupancy_matrix(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 7
-                                                  
+                      
+                        % Duvida: meter aqui condiÁao if para ver se se
+                        % altera a vel max ou nao max>lim -> max=lim
                       max_velocity = limit_velocity/3.6;
+                      speedlimit_signal = 1;
 %                       disp('Stop');
-                    else
-                        max_velocity = map_velocity/3.6;
                     end
 
                 end       
@@ -240,33 +258,38 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
      % Person or group of people randomly walking 
      
      for npeople=1:length(orientation_people)
+         
+         % Mudar isto para o tempo: time_people(npeople)
          if norm([posx_carsFront;posy_carsFront] - people_walk{npeople}(:,1)) < 5
              
                   
         index_random_people(npeople) = index_random_people(npeople) + 1;
         
-        if index_random_people<= length(people_walk{npeople}(1,:))
+        if index_random_people(npeople) <= length(people_walk{npeople}(1,:))
 
             if people_walk{npeople}(1,index_random_people(npeople)) >= 0 && people_walk{npeople}(2,index_random_people(npeople)) >= 0 
 
                 if index_random_people(npeople) >= 2 &&  people_walk{npeople}(1,index_random_people(npeople)-1) >= 0 && people_walk{npeople}(2,index_random_people(npeople)-1)>= 0 
                     
-                    occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople)-1)/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople)-1)/resolution)+1) = old_value;
+                    occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople)-1)/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople)-1)/resolution)+1) = old_people(npeople);
                         
                 end
 
                 pltpeopleRandom{npeople} = plot(round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,'rX');
                 
-                old_value = occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1);
+                 old_people(npeople) = occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1);
                 occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1) = 5;               
                 
             end
         else
-            occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople)-1)/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople)-1)/resolution)+1) = old_value;
-            index_random_people(npeople) = 0;
+               
+            occupancy_matrix(round(people_walk{npeople}(2,end)/resolution)+1,round(people_walk{npeople}(1,end)/resolution)+1) =  old_people(npeople);
+                
         end
+        end
+                      
         
-         end
+         
      end
     
                            
@@ -280,49 +303,41 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
                 if pos(1,index_laser) >= 0 && pos(2,index_laser) >= 0
 
                     % Check Occupancy grid
-
+                    % detecting un unknown object or person
                     if occupancy_matrix(round(pos(2,index_laser)/resolution)+1,round(pos(1,index_laser)/resolution)+1) == 0 || ...
                        occupancy_matrix(round(pos(2,index_laser)/resolution)+1,round(pos(1,index_laser)/resolution)+1) == 5  
+                   
                         
-                        
-                        % Posi√ß√£o do objeto em pixeis
-                        x_object_pixel = round(pos(1,index_laser)/resolution)+1;
-                        y_object_pixel = round(pos(2,index_laser)/resolution)+1;
-                        % Posi√ß√£o do objeto em metros
-                        x_object = pos(1,index_laser);
-                        y_object = pos(2,index_laser);
-
-%                         disp('Object ahead');
-                        distance_to_objet = sqrt((posx_carsFront - pos(1,index_laser))^2 + ...
+                        %distance between object and sensor origin
+                        distance_to_object = sqrt((posx_carsFront - pos(1,index_laser))^2 + ...
                                             (posy_carsFront - pos(2,index_laser))^2);
                         
-
+                        threshold = 2; % meter
+                        if distance_to_object < threshold
+                            Ncollision = Ncollision + 1;
+%                             plt_collision = plot(round(pos(1,index_laser)/resolution)+1,round(pos(2,index_laser)/resolution)+1,'b*');
+                            
+                        end
+                            
                         flag_object_ahead = 1;
 
-                        % Verificar se o objeto est√° est√°tico
-%                             if (sum(x_semaforo==x_object_pixel) >=1 && sum(y_semaforo==y_object_pixel)>= 1) || ...
-%                                (sum(x_stopSignal==x_object_pixel) >=1 && sum(y_stopSignal==y_object_pixel)>= 1)    
-%                                 theta = 0;                          
-%                                 v_object = 0;
-                        if  (sum(x_Person==x_object_pixel) >=1 && sum(y_Person==y_object_pixel)>= 1) && abs(object_x_old - x_object)>0.25 && abs(object_y_old - y_object)>0.17 
-                            theta_object = theta_people;
-                            if object_x_old > -1 && object_y_old > -1
-                                v_object = sqrt((object_x_old - x_object)^2 + (object_y_old - y_object)^2)/0.1;
-                            else
-                                v_object = 1;
-                            end
-                            object_x_old = x_object;
-                            object_y_old = y_object;                           
-                        else
+                        % Verificar colis„o futura se for objeto est·tico
+                        % -> paredes ou zona fora da estrada
+                         
+                        if  occupancy_matrix(round(pos(2,index_laser)/resolution)+1,round(pos(1,index_laser)/resolution)+1) == 0
+                            x_object = pos(1,index_laser);
+                            y_object = pos(2,index_laser);
                             theta_object = 0;                          
-                            v_object = 0;
-                        end
-                        % Calcular a colis√£o
-                        flag_Inerent_collision = check_collision(v,theta,posx_carsFront,posy_carsFront,v_object,theta_object,x_object,y_object);
+                            v_object = 0;  
+                            % Prever uma colis„o futura
+                            flag_Inerent_collision = check_collision(v,theta,posx_carsFront,posy_carsFront,v_object,theta_object,x_object,y_object);
 
-                        if flag_Inerent_collision
-                            break;
+                            if flag_Inerent_collision
+                                break;
+                            end
                         end
+                        
+                        
                     end
                 end
 
@@ -334,25 +349,13 @@ function [flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira
        occupancy_matrix(round(cantos(2,3)/resolution),round(cantos(1,3)/resolution))== 0  || ...
        occupancy_matrix(round(cantos(2,4)/resolution),round(cantos(1,4)/resolution)) == 0 
        flag_stop_car = 1;
+       Ncollision = Ncollision + 1;
     else
        flag_stop_car = 0;
     end
 
 
-%         h1 = plot(x,y,'bo');
-%         h2 = plot(posx_carsFront,posy_carsFront,'ro');
-%         h6 = plot(pos_camera(1,:),pos_camera(2,:),'g*');
-%         plot(pos(1,end)/resolution,pos(2,end)/resolution,'m*');
-%         plot(pos(1,272)/resolution,pos(2,272)/resolution,'m*');
-        plot_camera = plot(round(pos_camera(1,:)/resolution)+1,round(pos_camera(2,:)/resolution)+1,'g*');
-        
-      
-%         h7 = plot(cantos(1,:),cantos(2,:),'b');
 
+     
 
-%         plot(15,5,'y*');
-%         plot(8,0,'y*');
-% 
-%         axis equal;
-%         pause(0);
 end
