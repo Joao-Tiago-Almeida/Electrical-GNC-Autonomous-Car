@@ -207,7 +207,7 @@ while ~fin
 %             if counter_col == 10
 %                 counter_col = 0;
 %             end
-            disp("Colisão inerente: mudar direção")
+            disp("Colisï¿½o inerente: mudar direï¿½ï¿½o")
 %         else
 %             turn_now = false;
 %             counter_col = 0;
@@ -377,6 +377,9 @@ while ~fin
     ylim([y-gap, y+gap]/map_information.meters_from_MAP)
     
     subplot(s3)
+    if v > max_velocity
+        v = max_velocity;
+    end
     halfGuageDisplay(v/max_velocity);
     
     pause(0.001);
