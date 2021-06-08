@@ -1,6 +1,6 @@
 delete(timerfindall)
 clear all;
-close all;
+close all hidden;
 clc;
 
 %% Guidance
@@ -8,7 +8,7 @@ clc;
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity 
 global energy_budget map_velocity
 
-debug_mode = true;
+debug_mode = false;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation);
