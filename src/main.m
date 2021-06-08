@@ -70,7 +70,7 @@ x_new = x;y_new = y;theta_new = theta;
 x_odom = x;y_odom = y;
 
 % Initialize Iterations Counter
-t = 0; counter_nav = 0; counter_col = 0;
+t = 0; counter_nav = 0; counter_col = 0; countcol = 0;
 fin = 0;
 
 % Initialize Exact Velocity
@@ -262,7 +262,7 @@ while ~fin
         thetapt(t+1) = theta;
         xnewp(t+1) = x_new;
         ynewp(t+1) = y_new;
-        thetanewp(t+1) = theta_new;
+%         thetanewp(t+1) = theta_new;
         phip(t+1) = phi;
         t = t + 1;
         
@@ -277,22 +277,27 @@ while ~fin
         
         error_odom(1,t) = x_odom;
         error_odom(2,t) = y_odom;
-        error_odom(3,t) = theta_odom;
-        if flag_stop_car
+        %error_odom(3,t) = theta_odom;
+        if ~flag_stop_car && exist('crsh','var')
+            delete(crsh);
+            countcol = 0;
+        end
+        if flag_stop_car && countcol == 0
 %             disp('Car crash - Stopping the program');
             [icondata,iconcmap] = imread(string(file_path+"crash.jpg")); 
-            h=msgbox('Car crash',...
+            crsh=msgbox('Car crash',...
          'There was a crash','custom',icondata,iconcmap);
-            count=0;
+            countcol = 1;
             colision = colision + 1;
+        elseif flag_stop_car && countcol < 10
+            countcol = countcol + 1;
         end
-        if flag_Inerent_collision && v == 0 && ~flag_Person
-            disp('Car is unable to follow this path');
-            break;
-        end
+%         if flag_Inerent_collision && v == 0 && ~flag_Person
+%             disp('Car is unable to follow this path');
+%             break;
+%         end
         if vel_max < 1
-            disp('Energy budget too low - Stopping the program');
-            break;
+            disp('Energy budget too low');
         end
         start_v = 0;
         if( norm([x-xt(end),y-yt(end)]) < 0.5)

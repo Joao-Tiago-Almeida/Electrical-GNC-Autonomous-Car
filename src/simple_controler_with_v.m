@@ -1,4 +1,4 @@
-function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, vel_max, wet, stop, cwalk, person, end_stop, turn_now)
+function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, vel_max, wet, stop, cwalk, person, end_stop)
     global err_w count_w fixed_sample_rate
     if ~exist('wet','var')
         wet = false;
@@ -15,8 +15,8 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     if ~exist('end_stop','var')
         end_stop = -1;
     end
-    if ~exist('turn_now','var')
-        turn_now = false;
+    if vel_max < 1
+        vel_max = 1;
     end
     if wet
         mu = 0.4;
