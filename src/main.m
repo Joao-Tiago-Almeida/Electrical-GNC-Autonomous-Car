@@ -306,7 +306,9 @@ while ~fin
     end    
     if(t>1); delete(plt); end
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
-    waitbar(E/energy_budget,wt,sprintf("Energy... %f", (E/energy_budget)*100));
+    waitbar(E/energy_budget,wt,sprintf("Energy... %f", round((E/energy_budget)*100),2));
+    halfGuageDisplay(v/max_velocity)
+    
     
     pause(0.075);
     if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0)
