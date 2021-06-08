@@ -27,17 +27,17 @@ global start_v err_w count_w countstop countgo people_walk
 
 start_v = 0;err_w = 0;count_w = 0;countstop = 0;countgo = 0;
 
-% Testar e depois apagar!!!!!!
-duration_people = [10 5];
-orientation_people = [pi pi];
-
-initialPoint_people = [470 470 ;1080 1100];
-% Convert pixel to meter
-initialPoint_people = initialPoint_people*map_information.meters_from_MAP;
-Number_of_people =length(orientation_people);
-for npeople =1:Number_of_people
-    people_walk{npeople} = people_path(npeople);
-end
+% % Testar e depois apagar!!!!!!
+% duration_people = [10 5];
+% orientation_people = [pi pi];
+% 
+% initialPoint_people = [470 470 ;1080 1100];
+% % Convert pixel to meter
+% initialPoint_people = initialPoint_people*map_information.meters_from_MAP;
+% Number_of_people =length(orientation_people);
+% for npeople =1:Number_of_people
+%     people_walk{npeople} = people_path(npeople);
+% end
 
 
 %%
@@ -53,6 +53,7 @@ xt = sampled_path(:,1)*map_information.meters_from_MAP;
 yt = sampled_path(:,2)*map_information.meters_from_MAP;
 thetat = theta_generator(xt,yt);
 thetat(1) = -Rini(1); thetat(end) = -Rini(2);
+%%
 valid = 0; thderror = 1;
 while ~valid && thderror <= 4
     [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, thderror);
@@ -65,8 +66,8 @@ t_pred = It_Prediction(length(xt));
 % Initialize timer
 start(my_timer);
 stp = b_stp;%0.1;%06; % 0.013 para ist e 0.084 para corrida
+%%
 end_stop = -1;
-
 % Initialize Car Exact Position and Old GPS position
 x = xt(1);y = yt(1);theta = thetat(1);
 x_old = x;y_old = y;theta_old = theta;
@@ -358,7 +359,7 @@ while ~fin
         if vel_max < 1
             disp('Energy budget too low');
         end
-        start_v = 0;
+        %start_v = 0;
         if( norm([x-xt(end),y-yt(end)]) < 0.5)
             fin = 1;
         end

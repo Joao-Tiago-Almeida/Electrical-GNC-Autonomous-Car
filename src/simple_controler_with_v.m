@@ -36,6 +36,18 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     dtheta = (dtheta_in + dtheta_aux)/2;
     %phi that minimizes theta error (dtheta)
     phi_id = atan2(L*dtheta, v);
+    %phi regularization
+    if phi_id > pi/4
+        phi_id = pi/4;
+    elseif phi_id < -pi/4
+        phi_id = -pi/4;
+    end
+    %make the drive more smooth
+    if phi_id == pi/4 && phi < -pi/16
+        phi_id = -pi/4;
+    elseif phi_id == -pi/4 && phi > pi/16
+        phi_id = pi/4;
+    end
     %check for stop conditions
     if stop || person
         v = 0;
@@ -43,15 +55,15 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     elseif cwalk
         v = 1;
     %check if there is a curve
-    elseif abs(theta_safe) < 1e-1
+    elseif abs(theta_safe) < 1e-1 && phi_id < 1e-2
         if dx > 1e-6
             v = 10*dx/cos(theta_id);
         else
             v = 10*dy/sin(theta_id);
         end
-    elseif abs(theta_safe) < 0.15
+    elseif abs(theta_safe) < 0.15 && phi_id < 0.1
         v = 3;
-    elseif abs(theta_safe) < 0.2
+    elseif abs(theta_safe) < 0.2 && phi_id < 0.2
         v = 2;
     else
         v = 1;
@@ -70,18 +82,6 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     end
     if v < 0
         print('Negative Velocity')
-    end
-    %phi regularization
-    if phi_id > pi/4
-        phi_id = pi/4;
-    elseif phi_id < -pi/4
-        phi_id = -pi/4;
-    end
-    %make the drive more smooth
-    if phi_id == pi/4 && phi < -pi/16
-        phi_id = -pi/4;
-    elseif phi_id == -pi/4 && phi > pi/16
-        phi_id = pi/4;
     end
     %if there is no speed the wheels should not try to turn
     if v == 0

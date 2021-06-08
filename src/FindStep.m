@@ -19,7 +19,7 @@ function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
         x_new = x; y_new = y;
         x_odom = x; y_odom = y;
         t = 0; v = 1; phi = 0;
-        v_old = v; k_p = 1;
+        end_stop = -1; k_p = 1;
         theta = thetat(1);
         theta_new = theta;
         fin = 0;
@@ -34,12 +34,16 @@ function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
                 vld = 0;
                 break;
             end
+            if length(xt) - k_p < 2/fixed_sample_rate
+                end_stop = length(xt)-k_p;
+            end
             x_ref = point(1); y_ref = point(2);
             theta_safe = TrackPredict(thetat, fixed_sample_rate, k_p);
 
             [w_phi, v] = simple_controler_with_v(x_ref-x_new, y_ref-y_new,...
                 wrapToPi(theta_new), phi, v,...
-                difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), theta_safe, max_velocity);
+                difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), theta_safe, max_velocity,...
+                false, false, false, false, end_stop);
             x_old = x; y_old = y; v_old = v; x_odom_old = x_odom; y_odom_old = y_odom;
             [x,y,theta,phi] = robot_simulation(x, y, theta, v, phi, w_phi);
             
@@ -51,7 +55,7 @@ function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
             x_old,y_old,P,0,0, 0, x_new, y_new, theta_new, 0,...
             x_odom_old, y_odom_old, x_odom, y_odom);
             t = t + 1;
-            if( norm([x-xt(end),y-yt(end)]) < 0.3)
+            if( norm([x-xt(end),y-yt(end)]) < 1)
                 fin = 1;
             end
         end
