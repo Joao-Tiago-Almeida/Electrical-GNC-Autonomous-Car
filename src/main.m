@@ -126,6 +126,7 @@ GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
+Speedometer = figure('Name','Speedometer','NumberTitle','off');
 MAP_real_time = openfig(string(file_path+"MAP.fig"));
 MAP_real_time.Name = "Real Time Simulation";
 hold on
@@ -306,9 +307,10 @@ while ~fin
     end    
     if(t>1); delete(plt); end
     plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
-    waitbar(E/energy_budget,wt,sprintf("Energy... %f", round((E/energy_budget)*100),2));
+    waitbar(E/energy_budget,wt,sprintf("Energy... %f.2", (E/energy_budget)*100));
+    figure(Speedometer)
     halfGuageDisplay(v/max_velocity)
-    
+    figure(MAP_real_time)
     
     pause(0.075);
     if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0)
