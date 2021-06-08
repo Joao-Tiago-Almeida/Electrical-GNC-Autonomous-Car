@@ -43,13 +43,13 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     elseif cwalk
         v = 1;
     %check if there is a curve
-    elseif abs(theta_safe) < 1e-4
+    elseif abs(theta_safe) < 1e-2
         if dx > 1e-6
             v = 10*dx/cos(theta_id);
         else
             v = 10*dy/sin(theta_id);
         end
-    elseif abs(theta_safe) < 1e-3
+    elseif abs(theta_safe) < 0.1
         v = 3;
     elseif abs(theta_safe) < 0.2
         v = 2;
@@ -89,12 +89,12 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
         count_w = 0;
         return;
     end
-    %derivative of phi
-    err_w = (phi_id-phi);
-    %cumulative ws
-    count_w = count_w + err_w;
-    %wheel turning speed
-    ws = (phi_id-phi)*10+err_w*10+count_w*10;
+%     %derivative of phi
+%     err_w = (phi_id-phi);
+%     %cumulative ws
+%     count_w = count_w + err_w;
+%     %wheel turning speed
+    ws = (phi_id-phi)*10;%+err_w*10+count_w*10;
     %ws regularization
     if ws > 1.5
         ws = 1.5;
