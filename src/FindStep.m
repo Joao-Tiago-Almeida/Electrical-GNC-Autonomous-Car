@@ -8,7 +8,7 @@ function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
 % The function should be used like:
 % b_stp = FindStep(xt,yt,thetat,error)
 
-    global err_w count_w fixed_sample_rate
+    global err_w count_w fixed_sample_rate max_velocity
     min_dist = inf;
     wt = waitbar(0,"Running...");
     for stp = 0.001:0.001:0.1
@@ -39,7 +39,7 @@ function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
 
             [w_phi, v] = simple_controler_with_v(x_ref-x_new, y_ref-y_new,...
                 wrapToPi(theta_new), phi, v,...
-                difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), theta_safe, 5.6);
+                difference_from_theta(wrapToPi(thetap),wrapToPi(theta_new)), theta_safe, max_velocity);
             x_old = x; y_old = y; v_old = v; x_odom_old = x_odom; y_odom_old = y_odom;
             [x,y,theta,phi] = robot_simulation(x, y, theta, v, phi, w_phi);
             

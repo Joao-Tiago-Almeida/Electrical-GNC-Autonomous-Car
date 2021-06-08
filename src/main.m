@@ -128,6 +128,7 @@ conglomerate_breakups = 1;
 %% Run the Autonomous Car Program
 Speedometer = figure('Name','Speedometer','NumberTitle','off');
 MAP_real_time = openfig(string(file_path+"MAP.fig"));
+MAP_real_time.WindowStyle="normal";
 MAP_real_time.Name = "Real Time Simulation";
 hold on
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
@@ -327,8 +328,8 @@ close(wt);
 
 %% For the Plot of GPS_Breakups
 
-X_breakups = xnewp([GPS_Breakups(:)]);
-Y_breakups = ynewp([GPS_Breakups(:)]);
+X_breakups = xnewp(GPS_Breakups(:));
+Y_breakups = ynewp(GPS_Breakups(:));
 
 
 %% Timer Stoppage
