@@ -93,7 +93,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         end
         if(itr==n_max_points-1)
             orientation_path(2) = orientation(2);
-            removes_non_desired_neighbours(orientation(2));
             
             % force two end the path two points before in order to have
             % space to define the end orientation
@@ -102,6 +101,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             step = directions.idxs(I_front,:);
             stop = stop-2*step;
             idx_stop = yx_2_idx_graph(stop(2),stop(1));
+            removes_non_desired_neighbours(orientation(2),stop);
         end
         
         % performs dijkstra if the checkpoints are safe to drive
@@ -196,7 +196,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     if(debug_mode==true)
         inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, map_velocity)
         disp("[EOF] Path Planning")
-        license('inuse')
+        %license('inuse')
         %[fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');
     end
 
@@ -278,11 +278,9 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
     end
     in_heap(idx_start) = 1;
     
-	reach_endpoint = false;
-    
     wb=waitbar(0,"Closiness of the destination");
     % Do Dijkstra
-    while(~reach_endpoint && heap.Count()>0)
+    while(heap.Count()>0)
         
         node = heap.ExtractMin();
         node_location(node.index)=node;
@@ -291,14 +289,8 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
         % Confirm if the end point was reached
         if(idx_finish==node.index)
             % final node
-            if(strlength(orientation(2))>0) 
-               % speacific orientation at the final point
-               in_heap(node.index) = 0;
-            else
-                %disp("Computed points: "+num2str(sum(in_heap==-1)))
-                delete(wb);
-                return
-            end
+            delete(wb);
+            return
         end
         waitbar(1-norm(idx_graph_2_xy(node.index)-idx_graph_2_xy(idx_finish))/...
             (norm(idx_graph_2_xy(idx_start)-idx_graph_2_xy(idx_finish))),...
@@ -324,7 +316,7 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
             node_aux = new_node(cost,distance,new_idx,direction,linear_velocity,angular_velocity);
             
             % The first point has its speacific orientation
-            if ((node.index==idx_start) && (strlength(orientation(1))>0) && (direction ~= orientation(1))); continue; end
+            if ((node.index==idx_start) && (strlength(orientation(1))>0) && (direction ~= orientation(1))); continue; end  
             
             %% Insert node at the heap
             
@@ -336,6 +328,7 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
             elseif(in_heap(node_aux.index) == 1)
                 heap.UpdateElement(node_aux);
             end
+
         end
     end
     delete(wb);
@@ -509,10 +502,10 @@ function s = new_node(c,d,i,p,lv,av)
         f_linear_velocity,v_linear_velocity,f_angular_velocity,v_angular_velocity);
 end
 
-function removes_non_desired_neighbours(orientation)
+function removes_non_desired_neighbours(orientation, point)
 % This function will disallow the car to reach a neighour that will not
 % imply the final orientation
-    global directions map_grid points_grid
+    global directions map_grid 
     
     % final point
     for i=1:8
@@ -521,7 +514,7 @@ function removes_non_desired_neighbours(orientation)
         
         % blocks with zero in the grid
         step = directions.idxs(i,:);
-        neighbour = points_grid(end,:)+step;
+        neighbour = point+step;
         map_grid(neighbour(2),neighbour(1)) = 0;
     end
     

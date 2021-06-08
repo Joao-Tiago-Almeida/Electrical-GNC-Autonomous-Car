@@ -4,6 +4,10 @@
 function create_map
     global occupancy_matrix map_information path_points file_path energy_budget path_orientation map_velocity limit_velocity
     limit_velocity = 10; %Default value (only changed if user wants new speed limit zones)
+    map_velocity = 30;
+    
+    global initialPoint_People orientation_people duration_people time_people
+    
     %     path_img = "../maps/IST_campus.png"; %default map image path
 %     file_path = "../maps/IST_campus/";
 %     try
@@ -172,6 +176,7 @@ function create_map
         
         if(~isempty(speed_limits))
             limit_velocity = str2double(inputdlg("Type the Speed Limit for all the limited zones[km/h]",'Speed Limit',[1 40], {'10'}));
+            if(limit_velocity > map_velocity); limit_velocity = map_velocity; end
         end
         %% Picking the start and end points and the intermediate ones
         [pathPoints,path_orientation] = pickPathPoints(occupancy_matrix, folder_path);
@@ -220,8 +225,12 @@ function create_map
         traffic_lights = {};
         stop_signs = {};
         speed_limits = {};
-        while (user_option ~= 5)
-            user_option = menu('Choose one of the 4 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Speed Limit Zone', 'Im done!');
+        initialPoint_People = double.empty(2,0);
+        orientation_people = [];
+        duration_people = [];
+        time_people = [];
+        while (user_option ~= 6)
+            user_option = menu('Choose one of the 5 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Speed Limit Zone', 'Pedestrian Crossing', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
@@ -239,12 +248,20 @@ function create_map
                     speedLimit = drawSpeedLimit();
                     speed_limits{end + 1} = speedLimit;
                     occupancy_matrix(logical(inpolygon(X, Y, speedLimit(:,1)', speedLimit(:,2)' ) .* occupancy_matrix)) = 7;
+                case 5
+                    %Pedestrian crossing
+                     [initial_p_people, orient_people, dur_people, tm_people] = drawPeopleCrossing;
+                     initialPoint_People = [initialPoint_People(1,:) initial_p_people(1); initialPoint_People(2,:) initial_p_people(2)];
+                     orientation_people = [orientation_people orient_people];
+                     duration_people = [duration_people dur_people];
+                     time_people = [time_people tm_people];
                 otherwise
             end
         end
         
         if(~isempty(speed_limits))
             limit_velocity = str2double(inputdlg("Type the Speed Limit for all the limited zones[km/h]",'Speed Limit',[1 40], {'10'}));
+            if(limit_velocity > map_velocity); limit_velocity = map_velocity; end
         end
         
         savefig(MAP, string(folder_path + "MAP.fig"), 'compact');
@@ -484,7 +501,7 @@ function create_map
         trafficLight = h.Position;
     end
 
- function speedLimit = drawSpeedLimit
+    function speedLimit = drawSpeedLimit
         disp("Draw in the map one speed limit zone by drawing the region");
         h = drawpolygon('Color','c','InteractionsAllowed','none');
 
@@ -492,6 +509,91 @@ function create_map
         h.FaceAlpha = 0.1;
         %h.Label = 'Speed Limit';
         speedLimit = h.Position;
+    end
+
+    function [initialPoint_People, orientation_people, duration_people, time_people] = drawPeopleCrossing
+        %Pick a person position, angle of movement, duration of movement
+        %and instant of movement
+        try
+            h1 = drawcrosshair('LineWidth',1, 'Color','k');
+        catch
+            h1 = drawpoint('LineWidth',1, 'Color','k');
+        end
+        
+        try
+            h1.Visible = 'off';
+        catch
+            h1.Visibility = 'off';
+        end
+        
+        hc = drawcircle('Center',h1.Position,'Radius',14,'StripeColor','magenta');
+        hc.InteractionsAllowed = 'none';
+        initialPoint_People = round(h1.Position);
+        
+        prompt = {'Type the Angle Orientation of the Pedestrian Movement [degreed]:', 'Type the Movement Duration [s]:', 'Type the start instant of the Movement [s]:'};
+        final_params = string(inputdlg(prompt,'Parameters',[1 50], {'180','5','30'}));
+        final_params = str2double(final_params);
+        orientation_people = final_params(1);
+        duration_people = final_params(2);
+        time_people = final_params(3);
+        
+    end
+
+    function occupancy_matrix = ISTBreakups(folder_path, path_img, occupancy_matrix)
+        if exist(string(folder_path + "IST_BreakUps.mat"),'file')
+            [X,Y] = meshgrid(1:size(occupancy_matrix, 2),1:size(occupancy_matrix, 1));
+            %load(string(file_path+"MAP.mat"),'MAP');
+            %MAP = openfig(string(file_path+"MAP.fig"));
+            MAP = figure('Name','MAP','NumberTitle','off');
+            pbaspect([1 1 1]);
+            I = imread(path_img);
+            MAP.Children.Position = [0 0 1 1];
+            imshow(I);
+            MAP.WindowStyle = 'docked';
+            MAP.Units = 'pixel';
+            hold on;
+            load(string(folder_path + "roads.mat"), 'roads');
+            for idx=roads
+                h = drawpolygon('Color','k','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = [130 130 130] / 255;
+                h.FaceAlpha = 0.2;
+            end
+            
+            load(string(folder_path + "cross_walks.mat"), 'cross_walks');
+            load(string(folder_path + "traffic_lights.mat"), 'traffic_lights');
+            load(string(folder_path + "stop_signs.mat"), 'stop_signs');
+            load(string(folder_path + "speed_limits.mat"), 'speed_limits');
+            for idx=cross_walks
+                h = drawpolygon('Color','w','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = 'white';
+                h.FaceAlpha = 0.1;
+            end
+            for idx=traffic_lights
+                h = drawpolygon('Color','g','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = 'green';
+                h.FaceAlpha = 0.1;
+            end
+            for idx=stop_signs
+                h = drawpolygon('Color','r','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = 'red';
+                h.FaceAlpha = 0.1;
+            end
+            for idx=speed_limits
+                h = drawpolygon('Color','c','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = 'cyan';
+                h.FaceAlpha = 0.1;
+            end
+            %TODO: Load roads and roadmarks to fig
+            load(string(folder_path + "IST_BreakUps.mat"), 'ISTBreakupPoints');
+            for idx=ISTBreakupPoints
+                h = drawpolygon('Color','y','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = [255 204 102] / 255;
+                h.FaceAlpha = 0.2;
+                gps_breakup = cell2mat(idx);
+                occupancy_matrix(logical(inpolygon(X, Y, gps_breakup(:,1)', gps_breakup(:,2)' ) .* occupancy_matrix)) = 6;
+            end
+            savefig(MAP, string(folder_path + "MAP.fig"), 'compact');
+        end
     end
 
     

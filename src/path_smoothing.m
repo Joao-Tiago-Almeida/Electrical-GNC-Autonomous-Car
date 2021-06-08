@@ -1,14 +1,12 @@
 function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     
-    global debug_mode file_path map_velocity fixed_sample_rate
+    global debug_mode file_path map_velocity path_orientation fixed_sample_rate
     run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
     [change_points, cluster, cluster_boundaries] = path_segmentation(run_points, checkpoints, meters_from_MAP);
 
     smoothed_path = spline_clusters(change_points, cluster, cluster_boundaries, checkpoints);
     smoothed_path = [checkpoints(1,:); smoothed_path'; checkpoints(end,:)];
     
-    fixed_sample_rate_1 = 1; % meters
-    sampled_path_1 = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate_1);
     fixed_sample_rate = 0.05; % meters
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
@@ -20,14 +18,26 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     mean_velocity = mean(velocity); 
     path_duration = 3.6*path_distance/mean_velocity;    % 1m/s = 3.6 Km/mh
     average_velocity = 3.6*norm(checkpoints(1,:)-checkpoints(end,:))*meters_from_MAP/path_duration;
-    a = diff(sampled_path(end-20:end, :));
     
-    disp(" /'----------Path-Smoothing----------'\")
-    disp("| Distance:           "   +num2str(path_distance,"%.2f")   +  "  meters.  |")
-    disp("| Duration:           "   +num2str(path_duration,"%.2f")   +  "   seconds. |")
-    disp("| Mean Velocity:      "   +num2str(mean_velocity,"%.2f")   +  "   Km/h.    |")
-    disp("| Speed:              "   +num2str(average_velocity,"%.2f")+  "   Km/h.    |")
-    disp(" \,----------------------------------,/")
+    interval = 2/fixed_sample_rate; %last 2 meters   
+    a = diff(sampled_path(end-interval:end, :));
+    interval = 1/fixed_sample_rate; %first meter
+    final_orientation = wrapTo180(median( atan2(-a(:, 2), a(:, 1)) )*180/pi);
+    a = diff(sampled_path(1:interval, :));
+    initial_orientation = wrapTo180(median( atan2(-a(:, 2), a(:, 1)) )*180/pi);
+    initial_orientation_error = wrapTo180(abs(initial_orientation-path_orientation(1)));
+    final_orientation_error = wrapTo180(abs(final_orientation-path_orientation(2)));
+
+    disp(" /'----------Path-Smoothing--------------'\")
+    disp("| Distance:             "   +num2str(path_distance,"%.2f")   +  "  meters.    |")
+    disp("| Duration:             "   +num2str(path_duration,"%.2f")   +  "   seconds.   |")
+    disp("| Mean Velocity:        "   +num2str(mean_velocity,"%.2f")   +  "   Km/h.      |")
+    disp("| Speed:                "   +num2str(average_velocity,"%.2f")+  "   Km/h.      |")
+    disp("| Initial Orientation:  " + num2str(initial_orientation,"%.2f") + "   degrees.  |")
+    disp("| Final Orientation:    " + num2str(final_orientation,"%.2f") + "   degrees.  |")
+    disp("| Initial Orientation error  " + num2str(initial_orientation_error,"%.2f") + " degrees  |")
+    disp("| Final Orientation error  " + num2str(final_orientation_error,"%.2f") + " degrees  |")
+    disp(" \,--------------------------------------,/")
     
     %% Final plots and verifications
     
@@ -40,7 +50,6 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         plot(run_points(:, 1)*meters_from_MAP, run_points(:, 2)*meters_from_MAP, 'r--');
         plot(smoothed_path(:,1)*meters_from_MAP, smoothed_path(:,2)*meters_from_MAP, 'b')
         plot(sampled_path(:,1)*meters_from_MAP, sampled_path(:,2)*meters_from_MAP, 'k')
-        plot(sampled_path_1(:,1)*meters_from_MAP, sampled_path_1(:,2)*meters_from_MAP, 'g')
         place_car(sampled_path*meters_from_MAP,0.01, 1);
         legend(["Cluster " + unique(cluster)',...
             'Dijsktra Path',...
@@ -64,8 +73,6 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         cb.TickLabels=cb.TickLabels+" Km/h";
         cb.Position = [0.91 0.05 0.02 0.9];
         colormap(jet);
-        xlim([500 1300]);
-        ylim([500 1300]);
         Image = getframe(gcf);
         imwrite(Image.cdata, string(file_path+"bspline_path.png"), 'png');
         

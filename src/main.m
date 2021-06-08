@@ -6,7 +6,7 @@ clc;
 %% Guidance
 
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity 
-global energy_budget map_velocity
+global energy_budget map_velocity duration_people orientation_people initialPoint_people time_people
 
 debug_mode = false;
 create_map
@@ -17,11 +17,11 @@ max_velocity = map_velocity/3.6; %m/s
 %% Control and Navigation
 
 % Timer initialize
-global start_v err_w count_w countstop countgo duration_people orientation_people initialPoint_people people_walk
+global start_v err_w count_w countstop countgo people_walk
 
 start_v = 0;err_w = 0;count_w = 0;countstop = 0;countgo = 0;
 
-% Testar e depois apagar!!!!!!!!!!!!!!!!!!!!!11
+% Testar e depois apagar!!!!!!
 duration_people = [10 5];
 orientation_people = [pi pi];
 
@@ -32,7 +32,7 @@ for npeople =1:Number_of_people
 end
 
 
-    %%
+%%
 
 my_timer = timer('Name', 'my_timer', 'ExecutionMode', 'fixedRate', 'Period', 0.01, ...
                     'StartFcn', @(x,y)disp('started...'), ...
@@ -75,7 +75,7 @@ fin = 0;
 
 % Initialize Exact Velocity
 v = 1;
-v_old = v; vel_max = 5.6;
+v_old = v; vel_max = map_velocity;
 
 % Initialize Wheel orientation and angular speed
 phi = 0;
@@ -126,20 +126,49 @@ GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
-Speedometer = figure('Name','Speedometer','NumberTitle','off');
-MAP_real_time = openfig(string(file_path+"MAP.fig"));
-MAP_real_time.WindowStyle="normal";
-MAP_real_time.Name = "Real Time Simulation";
+
+h1 = openfig(string(file_path+"MAP.fig"));
+ax1 = gca;
+fig1 = get(ax1,'children'); %get handle to all the children in the figure
+fig2 = get(ax1,'children');
+
+fig = figure("Name","Real Time Simulation",'numbertitle', 'off');
+clf;
+fig.Position(1) = fig.Position(1)-(fig.Position(3))/2;
+fig.Position(3) = 1.7*fig.Position(3);
+
+s1=subplot(2,3,[1,2,4,5]);
+copyobj(fig1,s1);
+set(gca, 'YDir','reverse')
 hold on
+box on
+axis off
+axis equal
+title("Circuit");
 plot(sampled_path(:,1),sampled_path(:,2),"y--");
+
+s2=subplot(2,3,3);
+copyobj(fig2,s2);
+set(gca, 'YDir','reverse')
+hold on
+box on
+axis off
+axis equal
+title("Interest Area");
+plot(sampled_path(:,1),sampled_path(:,2),"y--");
+
+s3=subplot(2,3,6);
+hold on
+title("Spedometer");
+
+close(h1)
 
 wt = waitbar(1,"Energy...");
 set(wt,'Name','Energy Variation In Percentage');
  % find the patch object
- hPatch = findobj(wt,'Type','Patch');
+hPatch = findobj(wt,'Type','Patch');
  % change the edge and face to blue
- set(hPatch,'FaceColor','b', 'EdgeColor','w')
-
+set(hPatch,'FaceColor','b', 'EdgeColor','w')
 tic
 while ~fin
     Flag_GPS_Breakup = 0;
@@ -306,14 +335,25 @@ while ~fin
             fin = 1;
         end
     end    
-    if(t>1); delete(plt); end
-    plt = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
-    waitbar(E/energy_budget,wt,sprintf("Energy... %f.2", (E/energy_budget)*100));
-    figure(Speedometer)
-    halfGuageDisplay(v/max_velocity)
-    figure(MAP_real_time)
     
-    pause(0.075);
+    subplot(s1)
+    if(t>1); delete(plt1); end
+    plt1 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
+    
+    
+    subplot(s2)
+    if(t>1); delete(plt2); end
+    plt2 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
+    gap = 5;
+    xlim([x-gap, x+gap]/map_information.meters_from_MAP)
+    ylim([y-gap, y+gap]/map_information.meters_from_MAP)
+    
+    subplot(s3)
+    halfGuageDisplay(v/max_velocity);
+    
+    pause(0.001);
+    waitbar(E/energy_budget,wt,sprintf("Energy... %f.2", (E/energy_budget)*100));
+    
     if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0)
         delete(h);
         count=1;
@@ -361,14 +401,17 @@ ylabel('Error','FontSize',12,'FontName','Arial');
 xlabel('iterations','FontSize',12,'FontName','Arial');
 
 %%
-MAP_control = openfig(string(file_path+"MAP.fig"));
-MAP_control.Name = 'control';
-hold on
-place_car([xp',yp']/map_information.meters_from_MAP,3,thetapt,phip,map_information.meters_from_MAP);
-plot(sampled_path(:,1),sampled_path(:,2),"y--");
+% MAP_control = openfig(string(file_path+"MAP.fig"));
+% MAP_control.Name = 'control';
+% hold on
+% place_car([xp',yp']/map_information.meters_from_MAP,3,thetapt,phip,map_information.meters_from_MAP);
+% plot(sampled_path(:,1),sampled_path(:,2),"y--");
+
+
+%%
+disp("Finito")
 license('inuse')
 [fList,pList] = matlab.codetools.requiredFilesAndProducts('path_planning.m');
-
 %%
 function my_start_fcn(obj, event)
     global start_v

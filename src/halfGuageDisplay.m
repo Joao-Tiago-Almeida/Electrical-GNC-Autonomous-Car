@@ -34,7 +34,6 @@ function halfGuageDisplay(score)
 % Copyright 2016. Pooja C Narayan, Sensium Healthcare Ltd, Oxford UK
 % v:1.0 12 Feb 2016. Initial release.
 narginchk(1,1);
-clc
 if (score > 1)
     disp('Error! Please input a decimal value and retry!');
 else if (score < 0)
