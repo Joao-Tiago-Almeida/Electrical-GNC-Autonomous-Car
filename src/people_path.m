@@ -1,10 +1,8 @@
 function People_Path = people_path(npeople)
 
 
-global duration_people orientation_people initialPoint_people map_information
+global duration_people orientation_people initialPoint_people 
 
-% Convert pixel to meter
-initialPoint_people = initialPoint_people*map_information.meters_from_MAP; 
 % fixed distance 
 distance = 20;
 
@@ -13,7 +11,10 @@ velocity = distance/duration_people(npeople);
 vx = velocity*cos(orientation_people(npeople));
 vy = velocity*sin(orientation_people(npeople));
 
+% Initial position of each person
 People_Path = initialPoint_people(:,npeople);
+
+% Initialize final point
 p_final = People_Path;
 while true 
     
