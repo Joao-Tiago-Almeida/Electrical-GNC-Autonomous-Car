@@ -8,7 +8,7 @@ clc;
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity limit_velocity 
 global energy_budget map_velocity orientation_people initialPoint_People
 
-debug_mode = true;
+debug_mode = false;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation,"velocity");
@@ -258,14 +258,14 @@ while ~fin
             count2=1;
         end
         
-        if ~isempty(Ncollision) && count3==1
-            h1=msgbox(sprintf('Number of collisions so far = %g',Ncollision),...
-            'Lidar');
+        if ~isempty(colision) && count3==1
+            h1=msgbox(sprintf('Number of collisions so far = %d',colision),...
+            'Colision');
             count3=0;
-            old_Ncollision = Ncollision;
-        elseif Ncollision ~= old_Ncollision
-            set(findobj(h1,'Tag','MessageBox'),'String',sprintf('Number of collisions so far = %g',Ncollision));
-            old_Ncollision = Ncollision;   
+            old_Ncollision = colision;
+        elseif colision ~= old_Ncollision
+            set(findobj(h1,'Tag','MessageBox'),'String',sprintf('Number of collisions so far = %d',colision));
+            old_Ncollision = colision;   
         end
         
 
@@ -384,7 +384,7 @@ while ~fin
     halfGuageDisplay(v_graph/max_velocity);
     
     pause(0.001);
-    waitbar(E/energy_budget,wt,sprintf("Energy... %f", (E/energy_budget)*100));
+    waitbar(E/energy_budget,wt,sprintf("Energy... %0.2f", (E/energy_budget)*100));
     
     if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0 && speedlimit_signal==0)
         delete(h);

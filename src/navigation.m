@@ -26,7 +26,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     if vel_max > max_velocity
         vel_max = max_velocity;
     end
-    disp("vel_max:" + vel_max);
+%     disp("vel_max:" + vel_max);
     %% Extended Kalman Filter
 
     Q = eye(3).*0.1;

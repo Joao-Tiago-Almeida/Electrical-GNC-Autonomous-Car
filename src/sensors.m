@@ -98,7 +98,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
     % simulation of the camera
     for index_camera=1:size(y_camera,2) 
                 
-                if pos_camera(1,index_camera) >=0 && pos_camera(2,index_camera) >= 0
+                if pos_camera(1,index_camera) >=0 && pos_camera(2,index_camera) >= 0 && round(pos_camera(1,index_camera)/resolution)+1 < size(occupancy_matrix,2) && round(pos_camera(2,index_camera)/resolution)+1 < size(occupancy_matrix,1)
                     if occupancy_matrix(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 2 
                         %If the camera detects a crosswalk we insert a
                         %person 
@@ -208,7 +208,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
             
          
             % Check if the path is in a valid position
-            if x_people1(index_pessoa) >= 0 && y_people1(index_pessoa) >= 0
+            if x_people1(index_pessoa) >= 0 && y_people1(index_pessoa) >= 0 && round(x_people1(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,2) && round(y_people1(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,1)
                 
                 if index_pessoa >= 2 && x_people1(index_pessoa-1) >= 0 && y_people1(index_pessoa-1)>=0
                     occupancy_matrix(round(y_people1(index_pessoa-1)/resolution)+1,round(x_people1(index_pessoa-1)/resolution)+1) = old_value;
@@ -228,11 +228,11 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                 theta_people = theta_people1(index_pessoa);
 
             end
-        else
+        elseif x_people1(index_pessoa) >= 0 && y_people1(index_pessoa) >= 0 && round(x_people1(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,2) && round(y_people1(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,1)
             occupancy_matrix(round(y_people1(index_pessoa-1)/resolution)+1,round(x_people1(index_pessoa-1)/resolution)+1) = old_value;
             index_pessoa = 0;
             % End of the simulated path for person number 1           
-            path1_not_implemented =1;            
+            path1_not_implemented =1;     
         end
         
      end
@@ -242,7 +242,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
         index_pessoa = index_pessoa + 1;
         if index_pessoa<= 50
 
-            if x_people2(index_pessoa) >= 0 && y_people2(index_pessoa) >= 0 
+            if x_people2(index_pessoa) >= 0 && y_people2(index_pessoa) >= 0 && round(x_people2(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,2) && round(y_people2(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,1)
 
                 if index_pessoa >= 2 &&  x_people2(index_pessoa-1) >= 0 && y_people2(index_pessoa-1) >= 0 
                     occupancy_matrix(round(y_people2(index_pessoa-1)/resolution)+1,round(x_people2(index_pessoa-1)/resolution)+1) = old_value;
@@ -258,7 +258,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                 y_people = y_people2(index_pessoa);
                 
             end
-        else
+        elseif x_people2(index_pessoa) >= 0 && y_people2(index_pessoa) >= 0 && round(x_people2(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,2) && round(y_people2(index_pessoa-1)/resolution)+1 < size(occupancy_matrix,1)
             occupancy_matrix(round(y_people2(index_pessoa-1)/resolution)+1,round(x_people2(index_pessoa-1)/resolution)+1) = old_value;
             index_pessoa = 0;
             path2_not_implemented = 1;
@@ -278,7 +278,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
         
         if index_random_people(npeople) <= length(people_walk{npeople}(1,:))
 
-            if people_walk{npeople}(1,index_random_people(npeople)) >= 0 && people_walk{npeople}(2,index_random_people(npeople)) >= 0 
+            if people_walk{npeople}(1,index_random_people(npeople)) >= 0 && people_walk{npeople}(2,index_random_people(npeople)) >= 0 && round(people_walk{npeople}(1,index_random_people(npeople)-1)/resolution)+1 < size(occupancy_matrix,2) && round(people_walk{npeople}(2,index_random_people(npeople)-1)/resolution)+1 < size(occupancy_matrix,1) 
 
                 if index_random_people(npeople) >= 2 &&  people_walk{npeople}(1,index_random_people(npeople)-1) >= 0 && people_walk{npeople}(2,index_random_people(npeople)-1)>= 0 
                     
@@ -292,7 +292,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                 occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1) = 5;               
                 
             end
-        else
+        elseif people_walk{npeople}(1,index_random_people(npeople)) >= 0 && people_walk{npeople}(2,index_random_people(npeople)) >= 0 && round(people_walk{npeople}(1,index_random_people(npeople)-1)/resolution)+1 < size(occupancy_matrix,2) && round(people_walk{npeople}(2,index_random_people(npeople)-1)/resolution)+1 < size(occupancy_matrix,1) 
                
             occupancy_matrix(round(people_walk{npeople}(2,end)/resolution)+1,round(people_walk{npeople}(1,end)/resolution)+1) =  old_people(npeople);
                 
@@ -311,7 +311,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
 
                 % Make sure lidar does not break boundaries
 
-                if pos(1,index_laser) >= 0 && pos(2,index_laser) >= 0
+                if pos(1,index_laser) >= 0 && pos(2,index_laser) >= 0 && round(pos(1,index_laser)/resolution)+1 < size(occupancy_matrix,2) && round(pos(2,index_laser)/resolution)+1 < size(occupancy_matrix,1)
 
                     % Check Occupancy grid
                     % detecting un unknown object or person
@@ -355,17 +355,21 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
     end
 
     % Check collision 
-    if occupancy_matrix(round(cantos(2,1)/resolution),round(cantos(1,1)/resolution)) == 0 || ...
-       occupancy_matrix(round(cantos(2,2)/resolution),round(cantos(1,2)/resolution)) == 0 || ...
-       occupancy_matrix(round(cantos(2,3)/resolution),round(cantos(1,3)/resolution))== 0  || ...
-       occupancy_matrix(round(cantos(2,4)/resolution),round(cantos(1,4)/resolution)) == 0 
-       flag_stop_car = 1;
-       Ncollision = Ncollision + 1;
-    else
-       flag_stop_car = 0;
-    end
-
-
+%     if occupancy_matrix(round(cantos(2,1)/resolution),round(cantos(1,1)/resolution)) == 0 || ...
+%        occupancy_matrix(round(cantos(2,2)/resolution),round(cantos(1,2)/resolution)) == 0 || ...
+%        occupancy_matrix(round(cantos(2,3)/resolution),round(cantos(1,3)/resolution))== 0  || ...
+%        occupancy_matrix(round(cantos(2,4)/resolution),round(cantos(1,4)/resolution)) == 0 
+%        flag_stop_car = 1;
+%        Ncollision = Ncollision + 1;
+%     else
+%        flag_stop_car = 0;
+%     end
+    thd_col = 0.1;
+    cantos_0_aum = [cantos_0(1,1)-thd_col cantos_0(1,2)-thd_col cantos_0(1,3)+thd_col cantos_0(1,4)+thd_col;...
+        cantos_0(2,1)-thd_col cantos_0(2,2)+thd_col cantos_0(2,3)+thd_col cantos_0(2,4)-thd_col];
+    cantos1 = R*cantos_0_aum + [x;y];
+    
+    flag_stop_car = ColisionsCount(cantos1);
 
      
 

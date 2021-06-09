@@ -127,6 +127,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             elseif(itr+2<=length(valid_points))
                 disp("Invalid Subpath from point " + num2str(valid_points(itr)) + " to point " + num2str(valid_points(itr+1)));
                 valid_points(itr:itr+1)=[];
+                paths{valid_points(itr-1)} = [];
                 itr=itr-1;
             else
                 disp("Invalid Subpath from point " + num2str(valid_points(itr)) + " to point " + num2str(valid_points(itr+1)));
