@@ -1,15 +1,15 @@
 function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,flag_stopSignal,count1,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]...
     = sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera,y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,speedlimit_signal,...
-    people1,people2,count1,cantos_0,v,flag_stopSignal,flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 )
+    people1,people2,count1,cantos_0,v,flag_stopSignal,flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2,t)
     
     % Map information
-    global occupancy_matrix max_velocity map_information orientation_people limit_velocity
+    global occupancy_matrix max_velocity map_information orientation_people limit_velocity map_velocity
     
     % Other variables 
-    global Ncollision  countstop countgo people_walk
+    global Ncollision  countstop countgo people_walk time_people 
     
     % Global for plots
-    global plot_camera pltpeople1 pltpeople2 plot_lidar 
+    global plot_camera pltpeople1 pltpeople2 plot_lidar s1
     
     % Variables used only inside this function
     persistent index_pessoa index_random_people pltpeopleRandom old_people 
@@ -23,7 +23,8 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
         pltpeopleRandom = cell(1,length(orientation_people));
     end
     resolution = map_information.meters_from_MAP;
-    
+    sinal_limite =[];
+    subplot(s1);
     if exist('plot_camera','var')
         delete(plot_camera);
     end
@@ -67,6 +68,8 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
     
     pos = R*[x_lidar;y_lidar] + [posx_carsFront;posy_carsFront];
     pos_camera = R*[x_camera;y_camera] + [posx_carsFront;posy_carsFront];
+    
+    
     
     plot_camera = plot(round(pos_camera(1,:)/resolution)+1,round(pos_camera(2,:)/resolution)+1,'g*');
     plot_lidar = plot(round(pos(1,:)/resolution)+1,round(pos(2,:)/resolution)+1,'m*');
@@ -163,12 +166,20 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                       
                         % Duvida: meter aqui condiçao if para ver se se
                         % altera a vel max ou nao max>lim -> max=lim
-                      max_velocity = limit_velocity/3.6;
-                      speedlimit_signal = 1;
+                      sinal_limite = [sinal_limite 1];
 %                       disp('Stop');
+                    else
+                        sinal_limite = [sinal_limite 0];
                     end
 
                 end       
+    end
+    
+    if sum(sinal_limite) >= 1
+        max_velocity = limit_velocity/3.6;
+        speedlimit_signal = 1;
+    else
+        max_velocity = map_velocity/3.6;
     end
     
     if countstop < 30 && flag_stopSignal
@@ -260,7 +271,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
      for npeople=1:length(orientation_people)
          
          % Mudar isto para o tempo: time_people(npeople)
-         if norm([posx_carsFront;posy_carsFront] - people_walk{npeople}(:,1)) < 5
+         if t >= time_people(npeople)/0.1
              
                   
         index_random_people(npeople) = index_random_people(npeople) + 1;

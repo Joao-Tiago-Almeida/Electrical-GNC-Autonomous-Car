@@ -1,5 +1,5 @@
 function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, vel_max, wet, stop, cwalk, person, end_stop)
-    global err_w count_w fixed_sample_rate
+%     global err_w count_w fixed_sample_rate
     if ~exist('wet','var')
         wet = false;
     end
@@ -26,6 +26,7 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     end
     %brake effec in velocity
     brake_acc = mu*9.8;
+    acc = 3.3;
     L = 2.2;
     vant = v;
     %the perfect theta to converge
@@ -80,13 +81,16 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     if vant - v > brake_acc/10
         v = vant - brake_acc/10;
     end
+    if v - vant > acc/10
+        v = vant + acc/10;
+    end
     if v < 0
         print('Negative Velocity')
     end
     %if there is no speed the wheels should not try to turn
     if v == 0
         ws = 0;
-        count_w = 0;
+%         count_w = 0;
         return;
     end
 %     %derivative of phi

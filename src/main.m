@@ -6,7 +6,7 @@ clc;
 %% Guidance
 
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity limit_velocity 
-global energy_budget map_velocity duration_people orientation_people initialPoint_people time_people 
+global energy_budget map_velocity orientation_people initialPoint_People s1
 
 
 debug_mode = false;
@@ -27,17 +27,12 @@ global start_v err_w count_w countstop countgo people_walk
 
 start_v = 0;err_w = 0;count_w = 0;countstop = 0;countgo = 0;
 
-% % Testar e depois apagar!!!!!!
-% duration_people = [10 5];
-% orientation_people = [pi pi];
-% 
-% initialPoint_people = [470 470 ;1080 1100];
-% % Convert pixel to meter
-% initialPoint_people = initialPoint_people*map_information.meters_from_MAP;
-% Number_of_people =length(orientation_people);
-% for npeople =1:Number_of_people
-%     people_walk{npeople} = people_path(npeople);
-% end
+% Convert pixel to meter
+initialPoint_People = initialPoint_People*map_information.meters_from_MAP;
+Number_of_people =length(orientation_people);
+for npeople =1:Number_of_people
+    people_walk{npeople} = people_path(npeople);
+end
 
 
 %%
@@ -333,7 +328,7 @@ while ~fin
             flag_stopSignal,count1,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
             y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,speedlimit_signal,...
             people1,people2,count1,cantos_0,v,flag_stopSignal,...
-            flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2 );
+            flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2, t );
         
         error_odom(1,t) = x_odom;
         error_odom(2,t) = y_odom;
@@ -379,12 +374,14 @@ while ~fin
     
     subplot(s3)
     if v > max_velocity
-        v = max_velocity;
+        v_graph = max_velocity;
+    else
+        v_graph = v;
     end
-    halfGuageDisplay(v/max_velocity);
+    halfGuageDisplay(v_graph/max_velocity);
     
     pause(0.001);
-    waitbar(E/energy_budget,wt,sprintf("Energy... %f.2", (E/energy_budget)*100));
+    waitbar(E/energy_budget,wt,sprintf("Energy... %f", (E/energy_budget)*100));
     
     if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0 && speedlimit_signal==0)
         delete(h);

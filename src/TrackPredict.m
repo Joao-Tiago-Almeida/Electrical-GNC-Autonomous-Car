@@ -1,5 +1,5 @@
 function theta_var_5m = TrackPredict(thetat, dist, k_p)
-    n = 5/dist;%dist in meters
+    n = 10/dist;%dist in meters
     theta_var_5m = 0;
     for i = k_p:k_p+n
         if i > length(thetat)

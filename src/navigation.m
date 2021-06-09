@@ -51,16 +51,13 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     P = F*P0*F'+F*R*F';
 
     %% Update Phase
-    Norma =  norm([x_new y_new]);
-
     
-    H = [((x_new)/Norma) ((y_new)/Norma) 0; ...
-          ((-(y_new-y_new_old))/((x_new-x_new_old)^2 + (y_new-y_new_old)^2)) ((x_new-x_new_old)/((x_new-x_new_old)^2 + (y_new-y_new_old)^2)) 0];
+    H = eye(3);
 
-    y_hat = [norm([x_new y_new]);atan2((y_new-y_new_old),(x_new-x_new_old))];
+    y_hat = [x_new; y_new; theta_new];
 
 
-    y_theory = [norm([x_GPS y_GPS]);atan2((y_GPS-y_past_GPS),(x_GPS-x_past_GPS))];
+    y_theory = [x_GPS; y_GPS; theta_teo];
 
     % Check if there is a GPS breakup
 
@@ -72,7 +69,9 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     end
     %% Gaussian error of 0.0001%
 
-    u = [y_theory(1)*(10^(-5))*((rand(1,1) > 0.5)*2 - 1);y_theory(2)*(10^(-5))*((rand(1,1) > 0.5)*2 - 1)];
+    u = [randn(1,1)*0.1;...
+     randn(1,1)*0.1;...
+     randn(1,1)*0.01];
     % remove if NaN
     u(isnan(u)) = 0;
     y = y_theory + u - y_hat ;
@@ -86,7 +85,10 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     x_new = aux(1);
     y_new = aux(2);
     theta_new = aux(3);
-
+    
+    if norm([x_new-x_GPS,y_new-y_GPS]) > 1
+        debug = 1;
+    end
 
 
 end
