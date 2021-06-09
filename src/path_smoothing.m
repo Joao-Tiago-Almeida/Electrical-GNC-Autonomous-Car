@@ -1,6 +1,6 @@
 function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     
-    global debug_mode file_path max_velocity path_orientation
+    global debug_mode file_path map_velocity path_orientation fixed_sample_rate
     run_points = insert_checkpoints_in_runPoints(run_points, checkpoints);
     [change_points, cluster, cluster_boundaries] = path_segmentation(run_points, checkpoints, meters_from_MAP);
 
@@ -11,7 +11,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     sampled_path = resample_path(smoothed_path, meters_from_MAP, fixed_sample_rate);
     save(string(file_path+"sampled_path_"+num2str(fixed_sample_rate)+"_meters.mat"),'sampled_path');
    
-    velocity = max_velocity*compute_velocity(sampled_path, fixed_sample_rate);
+    velocity = map_velocity*compute_velocity(sampled_path, fixed_sample_rate);
     
     %% Path analysis
     path_distance = sum(meters_from_MAP*vecnorm(diff(sampled_path) ,2,2));
@@ -25,8 +25,8 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
     final_orientation = wrapTo180(median( atan2(-a(:, 2), a(:, 1)) )*180/pi);
     a = diff(sampled_path(1:interval, :));
     initial_orientation = wrapTo180(median( atan2(-a(:, 2), a(:, 1)) )*180/pi);
-    initial_orientation_error = abs(initial_orientation-path_orientation(1));
-    final_orientation_error = abs(final_orientation-path_orientation(2));
+    initial_orientation_error = wrapTo180(abs(initial_orientation-path_orientation(1)));
+    final_orientation_error = wrapTo180(abs(final_orientation-path_orientation(2)));
 
     disp(" /'----------Path-Smoothing--------------'\")
     disp("| Distance:             "   +num2str(path_distance,"%.2f")   +  "  meters.    |")
@@ -50,12 +50,11 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         plot(run_points(:, 1)*meters_from_MAP, run_points(:, 2)*meters_from_MAP, 'r--');
         plot(smoothed_path(:,1)*meters_from_MAP, smoothed_path(:,2)*meters_from_MAP, 'b')
         plot(sampled_path(:,1)*meters_from_MAP, sampled_path(:,2)*meters_from_MAP, 'k')
-        place_car(sampled_path*meters_from_MAP,0.01, 1);
+        %place_car(sampled_path*meters_from_MAP,0.01, 1);
         legend(["Cluster " + unique(cluster)',...
             'Dijsktra Path',...
             'Smoothed Path',...
-            "Fixed Rate Path at "+num2str(fixed_sample_rate)+" m",...
-            "Fixed Rate Path at "+num2str(fixed_sample_rate_1)+" m"],...
+            "Fixed Rate Path at "+num2str(fixed_sample_rate)+" m"],...
             'Location', 'Best');
         xlabel("meters")
         ylabel("meters")
