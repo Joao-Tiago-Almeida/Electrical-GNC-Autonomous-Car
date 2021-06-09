@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-function [sampled_path, checkpoints] = path_planning(path_points, path_orientation)
-=======
 function [sampled_path, checkpoints] = path_planning(path_points, path_orientation,loss_criterium)
->>>>>>> guidance
 % This function is responsabile to planning a path taking in account the
 % points {start, middle, stop}. It uses an dynamical weight dijkstra
 % algorithm. This version migth computes two different path in order to
@@ -37,12 +33,8 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     
     safe_matrix = draw_safe_matrix;
     gap_between_cells = floor(1/map_information.meters_from_MAP);
-<<<<<<< HEAD
-    points = compute_map_grid(path_points);
-=======
     [points,allowed_points] = compute_map_grid(path_points);
     path_points = path_points(logical(allowed_points),:);
->>>>>>> guidance
 
     % convert the points in the occupancy matrix in the grid
     points_grid(:,1) = (points(:,1)-1)/gap_between_cells+1;
@@ -65,11 +57,7 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     m_safe = 1-safe_matrix/max(max(safe_matrix));
 
     %% Auxiliar Structs
-<<<<<<< HEAD
-    heap = MinHeap(sum(sum(map_grid))-1);
-=======
     heap = MinHeap(sum(map_grid,'all')/2);
->>>>>>> guidance
     T = arrayfun(@(~) struct('cost',[],'distance',[],'index',[],'previous',[],'linear_velocity',[],...
                                 'angular_velocity',[]), 1:size(map_grid,1)*size(map_grid,2), 'UniformOutput',false);
     node_location = horzcat(T{:});
@@ -80,17 +68,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     %% DYNAMIC DIJKSTRA - Path planning
     
     orientation = round_thetas(path_orientation); % initial and final orientation -- path_orientation
-<<<<<<< HEAD
-    
-    sub_path = [];  % last confirmed path but it migth not occured if the stop point has to be deleted 
-    path_data = []; % accumulated path with start and stop points confirmed
-    prev_node=[];   % information about the start point 
-    prev_prev_node=[];  % information about the start point before
-    itr=1;
-    valid_points = 1:size(points_grid,1);
-    n_max_points = length(valid_points);
-    wb=waitbar(0,"Planning The Best Path");
-=======
 
     itr=1;
     valid_points = 1:size(points_grid,1);
@@ -100,7 +77,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     prevs = cell(n_max_points-1,1);
     
     wb=waitbar(0,"",'Name',"Planning The Best Route");
->>>>>>> guidance
     wb.Position(1)= wb.Position(1)-wb.Position(3);
     tic
     while(itr<length(valid_points))
@@ -113,15 +89,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         % define the orientation for final point at the last path
         orientation_path = ["",""];  % auxilar vect of orentations (for each sub path)\
         % first point of the user chosen track
-<<<<<<< HEAD
-        if(itr==1)
-            orientation_path(1) = orientation(1);
-        end
-        if(itr==n_max_points-1)
-            orientation_path(2) = orientation(2);
-            
-            % force two end the path two points before in order to have
-=======
         if(valid_points(itr)==1)
             orientation_path(1) = orientation(1);
         end
@@ -130,32 +97,18 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             
             % force two end the path two points before in order to have
             removes_non_desired_neighbours(orientation(2),stop);
->>>>>>> guidance
             % space to define the end orientation
             [~,I_front] = max(strcmp(directions.names,orientation(2)));
             % retrocede 1 movement
             step = directions.idxs(I_front,:);
             stop = stop-2*step;
             idx_stop = yx_2_idx_graph(stop(2),stop(1));
-<<<<<<< HEAD
-            removes_non_desired_neighbours(orientation(2),stop);
-=======
->>>>>>> guidance
         end
         
         % performs dijkstra if the checkpoints are safe to drive
         if( safe_matrix(1+gap_between_cells*(start(2)-1),1+gap_between_cells*(start(1)-1))>0 && ...
             safe_matrix(1+gap_between_cells*(stop(2)-1),1+gap_between_cells*(stop(1)-1))>0 )
         
-<<<<<<< HEAD
-            wb=waitbar((itr-1)/(length(valid_points)-1),wb,"Planning sub Path "+num2str(itr));
-            dijkstra(idx_start,idx_stop,prev_node,"velocity",orientation_path);
-        end
-        
-        if(isempty(node_location(idx_stop).cost))
-            % cannot start the path
-            if(itr==1)
-=======
             node_location = horzcat(T{:});
             heap.Clear();
         
@@ -165,33 +118,10 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
         
         if(isempty(node_location(idx_stop).cost))
             if(itr==1)  % failure in the initial sub path
->>>>>>> guidance
                 disp("Invalid Path (cannot start the path)");
                 return
             elseif(itr==length(valid_points)-1)
                 disp("Invalid Path (cannot end the path)");
-<<<<<<< HEAD
-                break
-            end
-            
-            valid_points(itr+1)=[];
-            disp("Invalid Subpath from point " + (itr) + " to point " + (itr+1));
-            prev_node = prev_prev_node;
-            sub_path = [];  
-            itr=itr-1;
-            
-        else            
-            path_data = [path_data;sub_path];
-            sub_path = get_path(idx_start,idx_stop);
-            prev_prev_node = prev_node;
-            prev_node = node_location(idx_stop);
-            disp("Valid Subpath from point " + itr + " to point " + (itr+1));
-            itr=itr+1;
-        end
-
-        node_location = horzcat(T{:});
-        heap.Clear();
-=======
                 valid_points(itr+1)=[];
                 break
             elseif(itr+2<=length(valid_points))
@@ -208,15 +138,10 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
             disp("Valid Subpath from point " + num2str(valid_points(itr)) + " to point " + num2str(valid_points(itr+1)));
             itr=itr+1;
         end
->>>>>>> guidance
     end
     
     toc
     delete(wb);
-<<<<<<< HEAD
-
-    if(isempty(sub_path))
-=======
     
     path_data = [points_grid(1,:),zeros(1,4)];
     
@@ -226,22 +151,13 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     end
     
     if(isempty(path_data))
->>>>>>> guidance
         disp("No Path available");
         return
     end
 
-<<<<<<< HEAD
-    path_data = [points_grid(1,:),zeros(1,size(sub_path,2)-2);    path_data;  sub_path];
-
-    if(itr==length(valid_points))   % reach the last point
-        path_data(end+1,:) = path_data(end,:);
-        path_data(end,1:2) = points_grid(valid_points(itr),:);
-=======
     if(n_max_points==valid_points(end))   % reach the last point
         path_data(end+1,:) = path_data(end,:);
         path_data(end,1:2) = points_grid(valid_points(end),:);
->>>>>>> guidance
         path_data(end,5) = path_data(end-1,5)+2*sqrt(strlength(orientation(2)));
     end
     
@@ -253,10 +169,6 @@ function [sampled_path, checkpoints] = path_planning(path_points, path_orientati
     average_velocity = 3.6*gap_between_cells*norm(points_grid(1,:)-points_grid(end,:))*map_information.meters_from_MAP/path_duration;
 
     disp(" /'----------Path-Planning-----------'\")
-<<<<<<< HEAD
-    %disp("| Points:             "   +num2str(n_points)             +  "     pixels.  |")
-=======
->>>>>>> guidance
     disp("| Distance:           "   +num2str(path_distance,"%.2f")   +  "  meters.  |")
     disp("| Duration:           "   +num2str(path_duration,"%.2f")   +  "   seconds. |")
     disp("| Mean Velocity:      "   +num2str(mean_velocity,"%.2f")   +  "   Km/h.    |")
@@ -309,16 +221,8 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     cb.TickLabels=cb.TickLabels+" Km/h";
     cb.Position = [0.91 0.05 0.02 0.9];
     colormap(jet);
-<<<<<<< HEAD
-    xlim([500 1300]);
-    ylim([500 1300]);
     Image = getframe(gcf);
     imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
-    %place_car(run_points,10);
-=======
-    Image = getframe(gcf);
-    imwrite(Image.cdata, string(file_path+"dijkstra_path.png"), 'png');
->>>>>>> guidance
     
     if(safe_debug==false); return; end
     
@@ -328,16 +232,12 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     subplot(2,1,1)
     hold on
     title("Run Velocity per distance")
-<<<<<<< HEAD
-    plot(path_data(:,5),path_data(:,4));
-=======
     yyaxis left
     plot(path_data(:,5),path_data(:,4));
     ylabel("Lienar Velocity")
     yyaxis right
     plot(path_data(:,5),path_data(:,6));
     ylabel("Angular Velocity")
->>>>>>> guidance
     xlim([0 path_data(end,5)])
     
     subplot(2,1,2)
@@ -383,11 +283,7 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
     end
     in_heap(idx_start) = 1;
     
-<<<<<<< HEAD
-    wb=waitbar(0,"Closiness of the destination");
-=======
     wb=waitbar(0,"",'Name',"Closiness of the destination");
->>>>>>> guidance
     % Do Dijkstra
     while(heap.Count()>0)
         
@@ -404,15 +300,9 @@ function dijkstra(idx_start,idx_finish,init_node,loss_criterium,orientation)
         waitbar(1-norm(idx_graph_2_xy(node.index)-idx_graph_2_xy(idx_finish))/...
             (norm(idx_graph_2_xy(idx_start)-idx_graph_2_xy(idx_finish))),...
             wb,...
-<<<<<<< HEAD
-            "Closiness of the destination");
-        
-        reachable_neighbours = identify_reachable_neighbours(idx_graph_2_xy(node.index),node.previous, sum(in_heap==-1)==1);
-=======
             strjoin(repmat(".",1,1+mod(heap.Count(),10))));
         
         reachable_neighbours = identify_reachable_neighbours(idx_graph_2_xy(node.index),node.previous);
->>>>>>> guidance
 
         for i = 1:8% arround movements
             if reachable_neighbours(i) == 0;continue;end
@@ -456,25 +346,12 @@ function subpath = get_path(idx_start,idx_finish)
 
     global node_location directions yx_2_idx_graph idx_graph_2_xy
     idx = idx_finish;
-<<<<<<< HEAD
-    subpath = zeros(0,5);
-=======
     subpath = zeros(0,6);
->>>>>>> guidance
     
     % Could not reach the goal
     if(isempty(node_location(idx).cost))
         return
     end
-<<<<<<< HEAD
-    
-    while(idx ~= idx_start)
-        % add the last point
-        subpath = [idx_graph_2_xy(idx),node_location(idx).cost,...
-                   node_location(idx).linear_velocity,node_location(idx).distance;
-                    subpath];
-        
-=======
 
     while(idx ~= idx_start)
         % add the last point
@@ -482,7 +359,6 @@ function subpath = get_path(idx_start,idx_finish)
                    node_location(idx).linear_velocity,node_location(idx).distance,node_location(idx).angular_velocity;
                     subpath];
 
->>>>>>> guidance
         % frontwards movement
         [~,I_front] = max(strcmp(directions.names,node_location(idx).previous)); 
         
@@ -495,11 +371,7 @@ function subpath = get_path(idx_start,idx_finish)
     end
 end
 
-<<<<<<< HEAD
-function reachable_neighbours = identify_reachable_neighbours(xy,previous_direction,first_point)
-=======
 function reachable_neighbours = identify_reachable_neighbours(xy,previous_direction)
->>>>>>> guidance
 % This function computes the points that are considered to be a next move.
 % When it is the start point, the can move all over the place , however for
 % any other circunstance, the car only of three choices: straight, left or
@@ -533,16 +405,6 @@ function reachable_neighbours = identify_reachable_neighbours(xy,previous_direct
     
    reachable_neighbours = logical(reachable_neighbours.*idxs');
    
-<<<<<<< HEAD
-%    if it is the first point and does not have no option, go back
-   if(first_point && sum(reachable_neighbours)==0)
-       [~,idx_front] = max(strcmp(directions.names,previous_direction));
-       idx_back = rem(idx_front+4,8); idx_back(idx_back==0)=8;
-       reachable_neighbours(idx_back)=true;
-   end
-   
-=======
->>>>>>> guidance
    % Availbale directions: directions.names(logical(reachable_neighbours))
 end
 
@@ -664,13 +526,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
-<<<<<<< HEAD
-        safe_distance = 0.5;    % meters
-        forbidden_zone = 1;  % meters
-=======
         safe_distance = 1;    % meters
         forbidden_zone = 1.5;  % meters
->>>>>>> guidance
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 
@@ -761,11 +618,7 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
 end
 
 %% Visibility Matrix
-<<<<<<< HEAD
-function points = compute_map_grid(path_points)
-=======
 function [points,allowed_points] = compute_map_grid(path_points)
->>>>>>> guidance
 % It is computed a visibility matrix from the occupancy grid where the gap
 % between the cells is the space of each division
 
@@ -776,11 +629,7 @@ function [points,allowed_points] = compute_map_grid(path_points)
     dy = 1:gap_between_cells:dim_y;
     [X,Y] = meshgrid(dx,dy);
     map_grid = occupancy_matrix(dy,dx)~=0;
-<<<<<<< HEAD
-    [points,~] = get_closest_point_in_grid(path_points);
-=======
     [points,allowed_points] = get_closest_point_in_grid(path_points);
->>>>>>> guidance
     
     if(~debug_mode);return;end
     

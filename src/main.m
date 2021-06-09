@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 delete(timerfindall)
 clear all;
 close all hidden;
@@ -7,13 +6,12 @@ clc;
 %% Guidance
 
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity limit_velocity 
-global energy_budget map_velocity orientation_people initialPoint_People s1
-
+global energy_budget map_velocity orientation_people initialPoint_People
 
 debug_mode = false;
 create_map
 
-[sampled_path, checkpoints] = path_planning(path_points, path_orientation);
+[sampled_path, checkpoints] = path_planning(path_points, path_orientation,"velocity");
 max_velocity = map_velocity/3.6; %m/s
 
 %% Control and Navigation
@@ -134,6 +132,8 @@ GPS_Breakups = [];
 conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
+
+global s2
 
 h1 = openfig(string(file_path+"MAP.fig"));
 ax1 = gca;
@@ -456,29 +456,3 @@ function my_start_fcn(obj, event)
     global start_v
     start_v = 1;
 end
-=======
-clear all;
-close all;
-clc;
-%%
-global debug_mode path_points path_orientation map_information
-
-debug_mode = true;
-create_map;
-
-[sampled_path, checkpoints] = path_planning(path_points, path_orientation,"velocity");
-
-
-
-
-%% Web map
-% 
-% if(length(fieldnames(map_information))==3)
-%     webmap
-%     lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
-%     lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
-%     wmline(lat,lon)
-%     wmmarker(map_information.fget_Lat_from_MAP(checkpoints(:,2)),map_information.fget_Lon_from_MAP(checkpoints(:,1)))
-% end
-
->>>>>>> guidance

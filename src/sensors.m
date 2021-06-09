@@ -9,7 +9,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
     global Ncollision  countstop countgo people_walk time_people 
     
     % Global for plots
-    global plot_camera pltpeople1 pltpeople2 plot_lidar s1
+    global plot_camera pltpeople1 pltpeople2 plot_lidar s2
     
     % Variables used only inside this function
     persistent index_pessoa index_random_people pltpeopleRandom old_people 
@@ -24,7 +24,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
     end
     resolution = map_information.meters_from_MAP;
     sinal_limite =[];
-    subplot(s1);
+    subplot(s2);
     if exist('plot_camera','var')
         delete(plot_camera);
     end
@@ -164,7 +164,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                     % Speed limit
                     if occupancy_matrix(round(pos_camera(2,index_camera)/resolution)+1,round(pos_camera(1,index_camera)/resolution)+1) == 7
                       
-                        % Duvida: meter aqui condiçao if para ver se se
+                        % Duvida: meter aqui condiï¿½ao if para ver se se
                         % altera a vel max ou nao max>lim -> max=lim
                       sinal_limite = [sinal_limite 1];
 %                       disp('Stop');
@@ -237,7 +237,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
         
      end
 
-    % Path for 2º Person 
+    % Path for 2ï¿½ Person 
      if x >= 0 && y >= 0  && path2_not_implemented == 0 
         index_pessoa = index_pessoa + 1;
         if index_pessoa<= 50
@@ -332,7 +332,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                             
                         flag_object_ahead = 1;
 
-                        % Verificar colisão futura se for objeto estático
+                        % Verificar colisï¿½o futura se for objeto estï¿½tico
                         % -> paredes ou zona fora da estrada
                          
                         if  occupancy_matrix(round(pos(2,index_laser)/resolution)+1,round(pos(1,index_laser)/resolution)+1) == 0
@@ -340,7 +340,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                             y_object = pos(2,index_laser);
                             theta_object = 0;                          
                             v_object = 0;  
-                            % Prever uma colisão futura
+                            % Prever uma colisï¿½o futura
                             flag_Inerent_collision = check_collision(v,theta,posx_carsFront,posy_carsFront,v_object,theta_object,x_object,y_object);
 
                             if flag_Inerent_collision
