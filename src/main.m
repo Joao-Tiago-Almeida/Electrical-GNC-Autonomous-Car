@@ -8,7 +8,7 @@ clc;
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity limit_velocity 
 global energy_budget map_velocity orientation_people initialPoint_People
 
-debug_mode = false;
+debug_mode = true;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation,"velocity");
@@ -170,7 +170,7 @@ plot(sampled_path(:,1),sampled_path(:,2),"y--");
 
 s3=subplot(2,3,6);
 hold on
-title("Spedometer");
+title("Speedometer");
 
 close(h1)
 
