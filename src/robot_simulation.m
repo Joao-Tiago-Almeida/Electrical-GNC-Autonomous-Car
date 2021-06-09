@@ -5,7 +5,12 @@ function [x,y,theta, phi] = robot_simulation(x_k, y_k, theta_k, v, phi_k, w_phi)
     x = x_k+dx;
     y = y_k+dy;
     dphi = w_phi;
-    phi = phi_k+w_phi;
-    dtheta = (v/L)*tan(abs(phi_k));
-    theta = theta_k+dtheta;
+    phi = phi_k+dphi*0.1;
+    if phi > pi/4
+        phi = pi/4;
+    elseif phi < -pi/4
+        phi = -pi/4;
+    end
+    dtheta = (v/L)*tan(phi_k);
+    theta = theta_k+dtheta*0.1;
 end
