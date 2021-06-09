@@ -8,8 +8,8 @@ distance = 20;
 
 % People velocity
 velocity = distance/duration_people(npeople);
-vx = velocity*cosd(orientation_people(npeople));
-vy = velocity*sind(orientation_people(npeople));
+vx = velocity*cosd(-orientation_people(npeople));
+vy = velocity*sind(-orientation_people(npeople));
 
 % Initial position of each person
 People_Path = initialPoint_People(:,npeople);
