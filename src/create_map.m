@@ -62,7 +62,7 @@ function create_map
         end
         
         prompt = {'Type the Energy Budget for the Car Travel:', 'Type the Maximum velocity for this map [km/h]:'};
-        final_params = string(inputdlg(prompt,'Parameters',[1 50], {'1.8e8','20'}));
+        final_params = string(inputdlg(prompt,'Parameters',[1 50], {'5e6','20'}));
         final_params = str2double(final_params);
         energy_budget = final_params(1);
         map_velocity = final_params(2);

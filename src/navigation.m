@@ -26,7 +26,7 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     if vel_max > max_velocity
         vel_max = max_velocity;
     end
-
+    disp("vel_max:" + vel_max);
     %% Extended Kalman Filter
 
     Q = eye(3).*0.1;
@@ -82,9 +82,9 @@ function [P,x_new,y_new,theta_new,flag_energy, ...
     aux =  x_pos + K*y ;
     P = (eye(size(K,1))-K*H)*P;
 
-    x_new = aux(1);
-    y_new = aux(2);
-    theta_new = aux(3);
+    x_new = aux(1)+randn(1,1)*0.05;
+    y_new = aux(2)+randn(1,1)*0.05;
+    theta_new = aux(3)+randn(1,1)*0.005;
     
     if norm([x_new-x_GPS,y_new-y_GPS]) > 1
         debug = 1;

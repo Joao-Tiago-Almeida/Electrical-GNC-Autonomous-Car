@@ -8,11 +8,13 @@ clc;
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity limit_velocity 
 global energy_budget map_velocity orientation_people initialPoint_People
 
-debug_mode = false;
+debug_mode = true;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation,"velocity");
 max_velocity = map_velocity/3.6; %m/s
+
+if(isempty(sampled_path));return;end
 
 %% Control and Navigation
 
@@ -204,7 +206,7 @@ while ~fin
 %             if counter_col == 10
 %                 counter_col = 0;
 %             end
-            disp("Colis�o inerente: mudar dire��o")
+            disp("/_\ Inerent colision!")
 %         else
 %             turn_now = false;
 %             counter_col = 0;
@@ -369,7 +371,7 @@ while ~fin
     subplot(s2)
     if(t>1); delete(plt2); end
     plt2 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
-    gap = 5;
+    gap = 7;
     xlim([x-gap, x+gap]/map_information.meters_from_MAP)
     ylim([y-gap, y+gap]/map_information.meters_from_MAP)
     
@@ -425,7 +427,7 @@ plot(xt,yt,'y'); axis equal;
 plot(error_odom(1,:),error_odom(2,:),'r');
 plot(xnewp,ynewp,'g');
 plot(X_breakups,Y_breakups,'x','MarkerSize',12);
-place_car([xp',yp'],1,thetapt,phip,map_information.meters_from_MAP);
+place_car([xp',yp'],1,thetapt,phip,1);
 title('Car Path','FontSize',14,'FontName','Arial');
 ylabel('y (m)','FontSize',12,'FontName','Arial');
 xlabel('x (m)','FontSize',12,'FontName','Arial');
