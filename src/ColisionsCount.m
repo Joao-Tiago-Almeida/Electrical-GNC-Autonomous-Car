@@ -25,8 +25,8 @@ function flag_stop_car = ColisionsCount(cantos)
     for k = 1:length(carsurrounds(1,:))
         %0 for not road and 5 for people
         if round(carsurrounds(1,k)/map_information.meters_from_MAP) >= 0 && round(carsurrounds(2,k)/map_information.meters_from_MAP) >= 0 && round(carsurrounds(1,k)/map_information.meters_from_MAP) < size(occupancy_matrix,2) && round(carsurrounds(2,k)/map_information.meters_from_MAP) < size(occupancy_matrix,1)
-            if occupancy_matrix(round(carsurrounds(2,k)/map_information.meters_from_MAP),round(carsurrounds(1,k)/map_information.meters_from_MAP)) == 0 || ...
-                    occupancy_matrix(round(carsurrounds(2,k)/map_information.meters_from_MAP),round(carsurrounds(1,k)/map_information.meters_from_MAP)) == 5
+            if occupancy_matrix(round(carsurrounds(2,k)/map_information.meters_from_MAP)+1,round(carsurrounds(1,k)/map_information.meters_from_MAP)+1) == 0 || ...
+                    occupancy_matrix(round(carsurrounds(2,k)/map_information.meters_from_MAP)+1,round(carsurrounds(1,k)/map_information.meters_from_MAP)+1) == 5
                 flag_stop_car = 1;
                 return;
             end

@@ -107,6 +107,7 @@ wet = false;
 % Sensor variables
 load 'Initialize_Sensors.mat';
 load 'Initialize_Sensors_flags.mat';
+car_stop = 0;
 
 % Create lidar
 [x_lidar,y_lidar]= lidar;
@@ -135,7 +136,7 @@ conglomerate_breakups = 1;
     
 %% Run the Autonomous Car Program
 
-global s2
+global s1
 
 h1 = openfig(string(file_path+"MAP.fig"));
 ax1 = gca;
@@ -215,7 +216,7 @@ while ~fin
             end_stop = length(xt)-wait_time;
         end
         
-        if flag_energy || flag_red_ligth || flag_stopSignal %|| flag_Inerent_collision
+        if flag_energy || flag_red_ligth || flag_stopSignal || car_stop
             stopt = true;
         else
             stopt = false;
@@ -260,7 +261,7 @@ while ~fin
         
         if ~isempty(colision) && count3==1
             h1=msgbox(sprintf('Number of collisions so far = %d',colision),...
-            'Colision');
+            'Collision');
             count3=0;
             old_Ncollision = colision;
         elseif colision ~= old_Ncollision
@@ -281,6 +282,12 @@ while ~fin
         % Car simulator
         [x,y,theta,phi] = robot_simulation(x, y, theta, v, phi, w_phi);
         [stopE, E] = Energy_decreasing(v, v_old, P0, E);
+        if E < 0 && v ~= 0
+            disp('No more Energy');
+            car_stop = 1;
+        elseif E < 0 && v == 0
+            break;
+        end
 
         x_aux = x;
         y_aux = y;
@@ -291,12 +298,14 @@ while ~fin
         y_odom = y_odom+error*cos(theta)+(y-y_old);
         theta_odom = theta;
         
-        if randsample( [0 1], 1, true, [0.999 0.001] ) || occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) == 6
-            GPS_Breakups = [GPS_Breakups; t];
-            if conglomerate_breakups
-                GPS_Breakups = [GPS_Breakups; (repmat(t,10,1) + (1:1:10)')];
-                conglomerate_breakups = 0;
-            end   
+        if round(y/map_information.meters_from_MAP)+1 >0 && round(x/map_information.meters_from_MAP)+1 > 0 && round(y/map_information.meters_from_MAP)+1 <= size(occupancy_matrix,2) && round(x/map_information.meters_from_MAP)+1 <= size(occupancy_matrix,1)
+            if randsample( [0 1], 1, true, [0.999 0.001] ) || occupancy_matrix(round(y/map_information.meters_from_MAP)+1,round(x/map_information.meters_from_MAP)+1) == 6
+                GPS_Breakups = [GPS_Breakups; t];
+                if conglomerate_breakups
+                    GPS_Breakups = [GPS_Breakups; (repmat(t,10,1) + (1:1:10)')];
+                    conglomerate_breakups = 0;
+                end   
+            end
         end
         
         
@@ -347,18 +356,19 @@ while ~fin
          'There was a crash','custom',icondata,iconcmap);
             countcol = 1;
             colision = colision + 1;
-        elseif flag_stop_car && countcol < 10
+        elseif flag_stop_car && countcol < 40
             countcol = countcol + 1;
+        elseif flag_stop_car && countcol >= 40
+            disp('Car has lost himself HELP!!!!');
+            break;
         end
+        
 %         if flag_Inerent_collision && v == 0 && ~flag_Person
 %             disp('Car is unable to follow this path');
 %             break;
 %         end
-        if vel_max < 1
-            disp('Energy budget too low');
-        end
         %start_v = 0;
-        if( norm([x-xt(end),y-yt(end)]) < 0.5)
+        if( norm([x-xt(end),y-yt(end)]) < 1)
             fin = 1;
         end
     end    
@@ -395,12 +405,12 @@ end
 toc
 
 %% Display final number of collisions
-if ~isempty(Ncollision) 
+if ~isempty(colision) 
     if exist('h1','var')
         delete(h1);
     end
-    h1=msgbox(sprintf('The final number of collisions is = %g',Ncollision),...
-    'Lidar');    
+    h1=msgbox(sprintf('The final number of collisions is = %d',colision),...
+    'Collision');    
 end
 
 %% Close Energy Display

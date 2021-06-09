@@ -6,7 +6,7 @@ function create_map
     limit_velocity = 10; %Default value (only changed if user wants new speed limit zones)
     map_velocity = 30;
     
-    global initialPoint_People orientation_people duration_people time_people
+    global initialPoint_People orientation_people duration_people time_people thd_col
     
     %     path_img = "../maps/IST_campus.png"; %default map image path
 %     file_path = "../maps/IST_campus/";
@@ -61,11 +61,12 @@ function create_map
             end
         end
         
-        prompt = {'Type the Energy Budget for the Car Travel:', 'Type the Maximum velocity for this map [km/h]:'};
-        final_params = string(inputdlg(prompt,'Parameters',[1 50], {'5e6','20'}));
+        prompt = {'Type the Energy Budget for the Car Travel:', 'Type the Maximum velocity for this map [km/h]:', 'Type the Threshold to be consider as colisionh [m]:' };
+        final_params = string(inputdlg(prompt,'Parameters',[1 50], {'5e6','20','0.1'}));
         final_params = str2double(final_params);
         energy_budget = final_params(1);
         map_velocity = final_params(2);
+        thd_col = final_params(3);
         
         %energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'1.8e8'}));
         if energy_budget < 0; energy_budget = 0; end

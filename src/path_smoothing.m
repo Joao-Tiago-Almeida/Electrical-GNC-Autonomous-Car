@@ -238,11 +238,22 @@ function smoothed_path = spline_clusters(change_points, clusters, cluster_bounda
         knot_vector = cumsum(y)/max(cumsum(y));
         
         w = ones(1, length(all_cluster_points));
+        for change = 1:length(clusters)
+            if(clusters(change)+1 == current_cluster)
+                for a = 1:length(all_cluster_points)
+                    if(sum( all_cluster_points(a, :) == change_points(change, : ) ) == 2)
+                        w(a) = 2;
+                        break;
+                    end
+                end
+            end
+        end
         %give more weight to the checkpoints for the smooth path to get closer
         for chk_point = 1:length(checkpoints)
             norm_points = ~logical (vecnorm( checkpoints(chk_point,:) - all_cluster_points, 2, 2 ));
             w(norm_points) = 3;
         end
+
         [M_0,~] = bspline_wdeboor(degree,knot_vector,all_cluster_points', w, 100);
         smoothed_path = [smoothed_path, M_0];
     end
