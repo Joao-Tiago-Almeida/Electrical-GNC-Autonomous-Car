@@ -208,11 +208,10 @@ end
 
 %% Visual Support Content
 function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_points, path_duration, map_velocity)
-% This functions displays in figures the path planned
+% This function displays in figures the path planned
     
     global map_information file_path safe_debug
     MAP = openfig(string(file_path+"MAP.fig"));
-    %load(string(file_path+"MAP.mat"),'MAP');
     MAP.Name = 'Path Planning Velocity';
     hold on
     plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",4)
@@ -227,7 +226,7 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     
     if(safe_debug==false); return; end
     
-    figure('WindowStyle', 'docked');
+    f = figure('WindowStyle', 'docked');
     t=0:seconds(path_duration)/(n_points-1):seconds(path_duration)';
 
     subplot(2,1,1)
@@ -235,10 +234,10 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     title("Run Velocity per distance")
     yyaxis left
     plot(path_data(:,5),path_data(:,4));
-    ylabel("Lienar Velocity")
+    ylabel("Linear Velocity [normalised]")
     yyaxis right
     plot(path_data(:,5),path_data(:,6));
-    ylabel("Angular Velocity")
+    ylabel("Angular Velocity [rad]")
     xlim([0 path_data(end,5)])
     
     subplot(2,1,2)
@@ -255,7 +254,12 @@ function inspect_plots(sampled_path, run_points, checkpoints, path_data, n_point
     figure('WindowStyle', 'docked');
     lat = map_information.fget_Lat_from_MAP(sampled_path(:,2));
     lon = map_information.fget_Lon_from_MAP(sampled_path(:,1));
-    geoplot(lat,lon,'g-*')
+    geoplot(lat,lon,":",'Color',[0.4940 0.1840 0.5560],"LineWidth",2)
+    hold on
+    lat = map_information.fget_Lat_from_MAP(checkpoints(:,2));
+    lon = map_information.fget_Lon_from_MAP(checkpoints(:,1));
+    geoplot(lat,lon,"o",'Color',"#FFD700","MarkerSize",10,"LineWidth",3)
+    
 
     %% Web map
     % webmap
@@ -527,8 +531,8 @@ function safe_matrix = draw_safe_matrix(safe_distance, forbidden_zone)
     global occupancy_matrix map_information debug_mode file_path plan_debug
     
     if nargin < 1
-        safe_distance = 1;    % meters
-        forbidden_zone = 1.5;  % meters
+        safe_distance = 0.5;    % meters
+        forbidden_zone = 1;  % meters
     end
     meters_from_MAP = map_information.meters_from_MAP;   % meters/pixel
 

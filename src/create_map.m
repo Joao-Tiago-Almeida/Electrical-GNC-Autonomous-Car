@@ -61,7 +61,7 @@ function create_map
             end
         end
         
-        prompt = {'Type the Energy Budget for the Car Travel:', 'Type the Maximum velocity for this map [km/h]:', 'Type the Threshold to be consider as colisionh [m]:' };
+        prompt = {'Type the Energy Budget for the Car Travel [J]:', 'Type the Maximum velocity for this map [km/h]:', 'Type the Threshold to be consider as colisionh [m]:' };
         final_params = string(inputdlg(prompt,'Parameters',[1 50], {'5e6','20','0.1'}));
         final_params = str2double(final_params);
         energy_budget = final_params(1);
@@ -144,8 +144,12 @@ function create_map
         traffic_lights = {};
         stop_signs = {};
         speed_limits = {};
-        while (user_option ~= 5)
-            user_option = menu('Choose one of the 4 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Speed Limit Zone', 'Im done!');
+        initialPoint_People = double.empty(2,0);
+        orientation_people = [];
+        duration_people = [];
+        time_people = [];
+        while (user_option ~= 6)
+            user_option = menu('Choose one of the 5 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Stop Sign', 'Speed Limit Zone', 'Pedestrian Crossing', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
@@ -163,6 +167,13 @@ function create_map
                     speedLimit = drawSpeedLimit();
                     speed_limits{end + 1} = speedLimit;
                     occupancy_matrix(logical(inpolygon(X, Y, speedLimit(:,1)', speedLimit(:,2)' ) .* occupancy_matrix)) = 7;
+                case 5
+                    %Pedestrian crossing
+                     [initial_p_people, orient_people, dur_people, tm_people] = drawPeopleCrossing;
+                     initialPoint_People = [initialPoint_People(1,:) initial_p_people(1); initialPoint_People(2,:) initial_p_people(2)];
+                     orientation_people = [orientation_people orient_people];
+                     duration_people = [duration_people dur_people];
+                     time_people = [time_people tm_people];
                 otherwise
             end
         end
@@ -231,7 +242,7 @@ function create_map
         duration_people = [];
         time_people = [];
         while (user_option ~= 6)
-            user_option = menu('Choose one of the 5 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Obstacle', 'Speed Limit Zone', 'Pedestrian Crossing', 'Im done!');
+            user_option = menu('Choose one of the 5 road marks to add ("Im done!" to exit)','Crosswalk','Traffic Light','Stop Sign', 'Speed Limit Zone', 'Pedestrian Crossing', 'Im done!');
             switch user_option
                 case 1
                     crossWalk = drawCrosswalk();
@@ -394,8 +405,8 @@ function create_map
             h.FaceAlpha = 0.1;
         end
         for idx=traffic_lights
-            h = drawpolygon('Color','g','InteractionsAllowed','none', 'Position', cell2mat(idx));
-            h.Color = 'green';
+            h = drawpolygon('Color','b','InteractionsAllowed','none', 'Position', cell2mat(idx));
+            h.Color = 'blue';
             h.FaceAlpha = 0.1;
          end
         for idx=stop_signs
@@ -465,7 +476,7 @@ function create_map
         h = drawpolygon('Color','r','InteractionsAllowed','none');
 
         h.Color = 'red';
-        h.FaceAlpha = 0.1;
+        h.FaceAlpha = 0.2;
         %h.Label = 'STOP';
         stopSign = h.Position;
     end
@@ -487,17 +498,17 @@ function create_map
         h = drawpolygon('Color','w','InteractionsAllowed','none');
 
         h.Color = 'white';
-        h.FaceAlpha = 0.1;
+        h.FaceAlpha = 0.2;
         %h.Label = 'Cross Walk';
         crosswalk = h.Position;
     end
 
     function trafficLight = drawTrafficLight
         disp("Draw in the map one traffic light by drawing the region");
-        h = drawpolygon('Color','g','InteractionsAllowed','none');
+        h = drawpolygon('Color','b','InteractionsAllowed','none');
 
-        h.Color = 'green';
-        h.FaceAlpha = 0.1;
+        h.Color = 'blue';
+        h.FaceAlpha = 0.2;
         %h.Label = 'Traffic Light';
         trafficLight = h.Position;
     end
@@ -507,7 +518,7 @@ function create_map
         h = drawpolygon('Color','c','InteractionsAllowed','none');
 
         h.Color = 'cyan';
-        h.FaceAlpha = 0.1;
+        h.FaceAlpha = 0.2;
         %h.Label = 'Speed Limit';
         speedLimit = h.Position;
     end
@@ -570,8 +581,8 @@ function create_map
                 h.FaceAlpha = 0.1;
             end
             for idx=traffic_lights
-                h = drawpolygon('Color','g','InteractionsAllowed','none', 'Position', cell2mat(idx));
-                h.Color = 'green';
+                h = drawpolygon('Color','b','InteractionsAllowed','none', 'Position', cell2mat(idx));
+                h.Color = 'blue';
                 h.FaceAlpha = 0.1;
             end
             for idx=stop_signs
