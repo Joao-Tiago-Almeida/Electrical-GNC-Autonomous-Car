@@ -8,6 +8,7 @@ function flag = check_collision(V_car,theta_car,x0_car,y0_car,V_object,theta_obj
  Vx_object = V_object*cos(theta_object);
  Vy_object = V_object*sin(theta_object);
  
+ % initial positions for the car and object
  x_car = x0_car;
  y_car = y0_car;
  x_object = x0_object;
@@ -16,19 +17,22 @@ function flag = check_collision(V_car,theta_car,x0_car,y0_car,V_object,theta_obj
  % update position:
  for index_pos =1:10
      
+     % determine the distance between the car and object 
      d = sqrt((x_car - x_object)^2 + (y_car - y_object)^2);
      
+     % update car's position
      x_car =  x0_car + Vx_car*0.1*index_pos;
      y_car = y0_car + Vy_car*0.1*index_pos;
      
+     %update object's position
      x_object =  x0_object + Vx_object*0.1*index_pos;
      y_object = y0_object + Vy_object*0.1*index_pos;
      
         
-     % The value 0.64 is the width of the car. Since (x_car,y_car) are the
+     %  Since (x_car,y_car) are the
      % coordinates of the point in the middle of the car's front, we need
      % to consider a circunference around this point to cover the possibility
-     % of a collision around other points.
+     % of a collision around other points. 
      if d < 1.0630-(1.0630/(11-index_pos))
          flag = 1;
          break;
