@@ -1,23 +1,10 @@
-% TODO link - https://notability.com/n/0goKZZ3B87j8BrKcE3ruIi
-
 % STARTING FUNCTION to create map, new roads and new path points
 function create_map
     global occupancy_matrix map_information path_points file_path energy_budget path_orientation map_velocity limit_velocity
     limit_velocity = 10; %Default value (only changed if user wants new speed limit zones)
     map_velocity = 30;
     
-    global initialPoint_People orientation_people duration_people time_people thd_col
-    
-    %     path_img = "../maps/IST_campus.png"; %default map image path
-%     file_path = "../maps/IST_campus/";
-%     try
-%         occupancy_matrix = load(string(file_path + 'occupancy_matrix.mat'), 'occupancy_matrix');
-%         path_points = load(string(file_path + 'path_points.mat'), 'path_points');
-%         path_orientation = load(string(file_path + 'path_orientation.mat'), 'path_orientation');
-%         map_information = load(string(file_path + 'map_information.mat'));
-%     catch
-%     end
-    
+    global initialPoint_People orientation_people duration_people time_people thd_col 
     %Changing the Map Image?
     while(true)
         if strcmpi(questdlg('Do you want to change the used Map image? ("No" to choose one of the default images)', 'Welcome to the Guidance GUI', 'Yes', 'No', 'No'), 'Yes')
@@ -68,7 +55,6 @@ function create_map
         map_velocity = final_params(2);
         thd_col = final_params(3);
         
-        %energy_budget = str2double(inputdlg("Type the Energy Budget for the Car Travel",'Energy Budget',[1 40], {'1.8e8'}));
         if energy_budget < 0; energy_budget = 0; end
         
         if((isempty(occupancy_matrix) || isempty(map_information) || isempty(path_points) || isempty(path_orientation)) == true); continue; end
@@ -127,8 +113,6 @@ function create_map
             roadMarkers = drawRoads();
             user_option = questdlg("If you're done drawing roads enter 'Yes' ", 'confirmation', 'Yes', 'No', 'Undo', 'No');
             if strcmpi(user_option, 'Undo')
-                 % TODO: Find a way to clear the polygon in image... for now it
-                 % simply doesn't save the drawn polygon but it remains plotted
                  user_option = "No";
             else
                 occupancy_matrix = occupancy_matrix + inpolygon(X, Y, roadMarkers(:,1)', roadMarkers(:,2)' );
@@ -212,7 +196,6 @@ function create_map
         %1)
         occupancy_matrix(occupancy_matrix > 1) = 1; 
         %% display Map Image
-        %load(string(folder_path+"MAP.mat"),'MAP');
         MAP = figure('Name','MAP','NumberTitle','off');
         pbaspect([1 1 1]);
         I = imread(path_img);
@@ -222,7 +205,6 @@ function create_map
         MAP.Units = 'pixel';
         hold on;
         
-        %MAP = openfig(string(folder_path+"MAP.fig"));
         load(string(folder_path + "roads.mat"), 'roads');
         for idx=roads
             h = drawpolygon('Color','k','InteractionsAllowed','none', 'Position', cell2mat(idx));
@@ -287,14 +269,6 @@ function create_map
     % Scaling the map to get map informations
     function MAP_info = scale_map(folder_path)
         %% get the coordinates
-        % Right green lamp in the star exit of the roundabout
-        %lat1 =  38.736798;
-        %lon1 = -9.139866;
-
-        % Center of the futsal camp
-        %lat2 =  38.736258;
-        %lon2 = -9.137637;
-
         user_option = "No";
         msgbox("Draw the FIRST location point, and type the coordinates","Defining the references", 'modal');
         while(strcmpi(user_option, "No"))
@@ -322,7 +296,6 @@ function create_map
         x1 = round(h1.Position);
 
         user_option = "No";
-        %msgbox("Draw the SECOND location point, and type the coordinates","Defining the references", 'modal');
         while(strcmpi(user_option, "No"))
             try
                 h2 = drawcrosshair('LineWidth',1, 'Color','k');
@@ -377,8 +350,6 @@ function create_map
             load(string(folder_path + "occupancy_matrix.mat"), 'occupancy_matrix');
         end
         
-        %load(string(file_path+"MAP.mat"),'MAP');
-        %MAP = openfig(string(file_path+"MAP.fig"));
         MAP = figure('Name','MAP','NumberTitle','off');
         pbaspect([1 1 1]);
         I = imread(path_img);
@@ -387,7 +358,6 @@ function create_map
         MAP.WindowStyle = 'docked';
         MAP.Units = 'pixel';
         hold on;
-        %TODO: Load roads and roadmarks to fig
         load(string(folder_path + "roads.mat"), 'roads');
         for idx=roads
             h = drawpolygon('Color','k','InteractionsAllowed','none', 'Position', cell2mat(idx));
@@ -477,7 +447,6 @@ function create_map
 
         h.Color = 'red';
         h.FaceAlpha = 0.2;
-        %h.Label = 'STOP';
         stopSign = h.Position;
     end
 
@@ -489,7 +458,6 @@ function create_map
         % that mark the road
         h.Color = [130 130 130] / 255;
         h.FaceAlpha = 0.2;
-        %h.Label = 'Road';
         roadMarkers = h.Position;
     end
 
@@ -499,7 +467,6 @@ function create_map
 
         h.Color = 'white';
         h.FaceAlpha = 0.2;
-        %h.Label = 'Cross Walk';
         crosswalk = h.Position;
     end
 
@@ -509,7 +476,6 @@ function create_map
 
         h.Color = 'blue';
         h.FaceAlpha = 0.2;
-        %h.Label = 'Traffic Light';
         trafficLight = h.Position;
     end
 
@@ -519,7 +485,6 @@ function create_map
 
         h.Color = 'cyan';
         h.FaceAlpha = 0.2;
-        %h.Label = 'Speed Limit';
         speedLimit = h.Position;
     end
 
@@ -554,8 +519,6 @@ function create_map
     function occupancy_matrix = ISTBreakups(folder_path, path_img, occupancy_matrix)
         if exist(string(folder_path + "IST_BreakUps.mat"),'file')
             [X,Y] = meshgrid(1:size(occupancy_matrix, 2),1:size(occupancy_matrix, 1));
-            %load(string(file_path+"MAP.mat"),'MAP');
-            %MAP = openfig(string(file_path+"MAP.fig"));
             MAP = figure('Name','MAP','NumberTitle','off');
             pbaspect([1 1 1]);
             I = imread(path_img);
