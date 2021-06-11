@@ -275,7 +275,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                          
                 end
                 % plot the person's path with a red X
-                pltpeople1 = plot(round(x_people1(index_pessoa)/resolution),round(y_people1(index_pessoa)/resolution),'rX');
+                pltpeople1 = plot(round(x_people1(index_pessoa)/resolution),round(y_people1(index_pessoa)/resolution),'rX','MarkerSize','10','LineWidth',12);
 
                 % Save occupancy_matrix value before inserting a person
                 old_value = occupancy_matrix(round(y_people1(index_pessoa)/resolution)+1,round(x_people1(index_pessoa)/resolution)+1);
@@ -315,7 +315,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                         
                 end
                 % plot the person's path with a red X
-                pltpeople2 = plot(round(x_people2(index_pessoa)/resolution)+1,round(y_people2(index_pessoa)/resolution)+1,'rX');
+                pltpeople2 = plot(round(x_people2(index_pessoa)/resolution)+1,round(y_people2(index_pessoa)/resolution)+1,'rX','MarkerSize','10','LineWidth',12);
                 
                 % Save occupancy_matrix value before inserting a person
                 old_value = occupancy_matrix(round(y_people2(index_pessoa)/resolution)+1,round(x_people2(index_pessoa)/resolution)+1);
@@ -357,7 +357,7 @@ function [speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collisi
                 end
                 
                 % plot the person's path with a red X
-                pltpeopleRandom{npeople} = plot(round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,'rX');
+                pltpeopleRandom{npeople} = plot(round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,'rX','MarkerSize','10','LineWidth',12);
                 
                 % Save occupancy_matrix value before inserting a person
                 old_people(npeople) = occupancy_matrix(round(people_walk{npeople}(2,index_random_people(npeople))/resolution)+1,round(people_walk{npeople}(1,index_random_people(npeople))/resolution)+1);
