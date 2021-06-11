@@ -18,16 +18,19 @@ People_Path = initialPoint_People(:,npeople);
 p_final = People_Path;
 while true 
     
+    % check if the pedestrian has walked 20 meters
     if exist('p_final','var')
         if norm(p_final - initialPoint_People(:,npeople)) >= distance
             break;
         end
     end
+    % new position for the pedestrian
     x = p_final(1) + vx*0.1;
     y = p_final(2) + vy*0.1;
     
     p_final = [x;y];   
     
+    % save positions in array
     People_Path=[People_Path p_final];
       
 end
