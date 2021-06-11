@@ -19,7 +19,7 @@ if(isempty(sampled_path));return;end
 %% Control and Navigation
 
 global Ncollision
-
+PCov = cell(1,5000);
 Ncollision=0;
 % Timer initialize
 
@@ -49,19 +49,21 @@ xt = sampled_path(:,1)*map_information.meters_from_MAP;
 yt = sampled_path(:,2)*map_information.meters_from_MAP;
 thetat = theta_generator(xt,yt);
 thetat(1) = -Rini(1); thetat(end) = -Rini(2);
-%%
+
+%% Parameters prediction
+
 valid = 0; thderror = 1;
 while ~valid && thderror <= 4
     [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, thderror);
     thderror = thderror*2;
 end
-% b_stp = 0.015;
+
 t_pred = It_Prediction(length(xt));
 %% Initialization
 
 % Initialize timer
 start(my_timer);
-stp = b_stp;%0.1;%06; % 0.013 para ist e 0.084 para corrida
+stp = b_stp;
 %%
 end_stop = -1;
 % Initialize Car Exact Position and Old GPS position
@@ -129,8 +131,7 @@ old_value = -1;
 
 % GPS Breakups
 
-% Vector of points for GPS Break Ups - They can Be Random and in specific
-% areas - FALTA METER A FUNCIONAR COM OQ UE VEM DO .mat
+% Vector of points for GPS Break Ups
 GPS_Breakups = [];
 conglomerate_breakups = 1;
     
@@ -187,16 +188,7 @@ while ~fin
         % Measure the distance to tranjectory
         [point, distance, thetap, wait_time] = dist_to_traj(x_new, y_new, xt, yt, thetat, v, stp, wait_time);
         dist_to_p(t+1) = distance;
-        if distance > 1
-            debug = 1
-            %break;
-        end
-        
-        if t == 145
-            pause_please = 1;
-        end
-        
-        % alteração com a branco e a r
+
         if flag_Inerent_collision
             disp("/_\ Inerent colision!")
         end
@@ -268,10 +260,10 @@ while ~fin
         % Car simulator
         [x,y,theta,phi] = robot_simulation(x, y, theta, v, phi, w_phi);
         [stopE, E] = Energy_decreasing(v, v_old, P0, E);
-        if E < 0 && v ~= 0
+        if E <= 0 && v ~= 0
             disp('No more Energy');
             car_stop = 1;
-        elseif E < 0 && v == 0
+        elseif E <= 0 && v == 0
             break;
         end
 
@@ -294,9 +286,6 @@ while ~fin
             end
         end
         
-        
-        
-        
         if v ~= 0
             counter_nav = counter_nav + 1;
             [P,x_new,y_new,theta_new,flag_energy,vel_max] ...
@@ -318,27 +307,30 @@ while ~fin
         thetapt(t+1) = theta;
         xnewp(t+1) = x_new;
         ynewp(t+1) = y_new;
-%         thetanewp(t+1) = theta_new;
         phip(t+1) = phi;
         t = t + 1;
         
         % Lidar Sensors
-%         
-[speedlimit_signal,flag_object_ahead,flag_stop_car,flag_Inerent_collision,flag_passadeira,flag_Person,flag_red_ligth,...
-            flag_stopSignal,count1,old_value,path1_not_implemented,path2_not_implemented,x_people1,y_people1,x_people2 ,y_people2 ]= sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
-            y_camera,path2_not_implemented,path1_not_implemented,flag_Person,flag_red_ligth,speedlimit_signal,...
-            people1,people2,count1,cantos_0,v,flag_stopSignal,...
-            flag_Inerent_collision,old_value,x_people1,y_people1,x_people2 ,y_people2, t );
+        
+        [speedlimit_signal,flag_object_ahead,flag_stop_car,...
+            flag_Inerent_collision,flag_passadeira,flag_Person,...
+            flag_red_ligth,flag_stopSignal,count1,old_value,...
+            path1_not_implemented,path2_not_implemented,x_people1,...
+            y_people1,x_people2 ,y_people2 ] =...
+        sensors(x,y,theta,dim,x_lidar,y_lidar,x_camera, ...
+                y_camera,path2_not_implemented,path1_not_implemented,...
+                flag_Person,flag_red_ligth,speedlimit_signal,...
+                people1,people2,count1,cantos_0,v,flag_stopSignal,...
+                flag_Inerent_collision,old_value,x_people1,y_people1,...
+                x_people2 ,y_people2, t );
         
         error_odom(1,t) = x_odom;
         error_odom(2,t) = y_odom;
-        %error_odom(3,t) = theta_odom;
         if ~flag_stop_car && exist('crsh','var')
             delete(crsh);
             countcol = 0;
         end
         if flag_stop_car && countcol == 0
-%             disp('Car crash - Stopping the program');
             [icondata,iconcmap] = imread(string(file_path+"crash.jpg")); 
             crsh=msgbox('Car crash',...
          'There was a crash','custom',icondata,iconcmap);
@@ -351,24 +343,23 @@ while ~fin
             break;
         end
         
-%         if flag_Inerent_collision && v == 0 && ~flag_Person
-%             disp('Car is unable to follow this path');
-%             break;
-%         end
         start_v = 0;
         if( norm([x-xt(end),y-yt(end)]) < 1)
             fin = 1;
         end
+        PCov{t} = P;
     end    
     
     subplot(s1)
     if(t>1); delete(plt1); end
-    plt1 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
+    plt1 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],...
+                        100,theta,phi,map_information.meters_from_MAP);
     
     
     subplot(s2)
     if(t>1); delete(plt2); end
-    plt2 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],100,theta,phi,map_information.meters_from_MAP);
+    plt2 = place_car([x/map_information.meters_from_MAP,y/map_information.meters_from_MAP],...
+                        100,theta,phi,map_information.meters_from_MAP);
     gap = 7;
     xlim([x-gap, x+gap]/map_information.meters_from_MAP)
     ylim([y-gap, y+gap]/map_information.meters_from_MAP)
@@ -384,11 +375,13 @@ while ~fin
     pause(0.001);
     waitbar(E/energy_budget,wt,sprintf("Energy... %0.2f", (E/energy_budget)*100));
     
-    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && flag_stopSignal==0 && flag_Person==0 && speedlimit_signal==0)
+    if exist('h','var') && (flag_red_ligth==0 && flag_passadeira==0 && ...
+                flag_stopSignal==0 && flag_Person==0 && speedlimit_signal==0)
         delete(h);
         count=1;
         count2=1;
     end
+    
 end
 toc
 
@@ -418,7 +411,8 @@ delete(timerfindall)
 clear my_timer       
 
 
-%% 
+%% Experimental Results Analysis
+
 figure('WindowStyle', 'docked');
 plot(xp,yp,'b'); hold on;
 plot(xt,yt,'y'); axis equal;
@@ -452,13 +446,69 @@ title('Evolution of car wheel turning velocity','FontSize',14,'FontName','Arial'
 ylabel('Wheel turning speed [rad/s]','FontSize',12,'FontName','Arial');
 xlabel('iterations','FontSize',12,'FontName','Arial');
 
-%%
-% MAP_control = openfig(string(file_path+"MAP.fig"));
-% MAP_control.Name = 'control';
-% hold on
-% place_car([xp',yp']/map_information.meters_from_MAP,3,thetapt,phip,map_information.meters_from_MAP);
-% plot(sampled_path(:,1),sampled_path(:,2),"y--");
+%% Navigation Experimental Analysis
 
+cplot = @(r,x0,y0) plot(x0 + r*cos(linspace(0,2*pi)),y0 + r*sin(linspace(0,2*pi)),'-');
+w=1;
+for q = 1:t
+    if (norm(PCov{q}) < 1)
+        cov_propagation(q) = norm(PCov{q});
+        w = w+1;
+    end
+end
+
+figure('WindowStyle', 'docked');
+plot(xp,yp,'b'); hold on;
+plot(xt,yt,'y'); axis equal;
+plot(error_odom(1,:),error_odom(2,:),'r');
+plot(xnewp,ynewp,'g');
+plot(X_breakups,Y_breakups,'x','MarkerSize',12);
+place_car([xp',yp'],1,thetapt,phip,1);
+
+for q = 1:t
+    if (norm(PCov{q}) < 1)
+        cplot( norm(PCov{q}),xnewp(q),ynewp(q))
+        hold on;
+    end
+end
+
+title('Car Path','FontSize',14,'FontName','Arial');
+ylabel('y (m)','FontSize',12,'FontName','Arial');
+xlabel('x (m)','FontSize',12,'FontName','Arial');
+legend('Actual Car Path','Car Initial Path','Odometry','Position Prediction','GPS BreakUp Points','Covariance Propagation');
+legend show;
+
+figure('WindowStyle', 'docked');
+subplot(2,1,1)
+plot(xp,yp,'b'); hold on;
+plot(xt,yt,'y'); axis equal;
+plot(error_odom(1,:),error_odom(2,:),'r');
+plot(xnewp,ynewp,'g');
+plot(X_breakups,Y_breakups,'x','MarkerSize',12);
+place_car([xp',yp'],1,thetapt,phip,1);
+
+for q = 1:t
+    if (norm(PCov{q}) < 1)
+        cplot( norm(PCov{q}),xnewp(q),ynewp(q))
+        hold on;
+    end
+end
+
+title('Car Path','FontSize',14,'FontName','Arial');
+ylabel('y (m)','FontSize',12,'FontName','Arial');
+xlabel('x (m)','FontSize',12,'FontName','Arial');
+legend('Actual Car Path','Car Initial Path','Odometry','Position Prediction','GPS BreakUp Points','Covariance Propagation');
+legend show;
+
+subplot(2,1,2)
+plot(linspace(1,size(cov_propagation,2),size(cov_propagation,2)), cov_propagation,'--','MarkerSize',12)
+hold on;
+plot(dist_to_p);
+title('Covariance Propagation','FontSize',14,'FontName','Arial');
+grid on;
+ylabel('Deviation [m]','FontSize',12,'FontName','Arial');
+xlabel('Iteration [n]','FontSize',12,'FontName','Arial');
+legend('Covariance Propagation','Estimation Error');
 
 %%
 disp("Finito")
