@@ -8,7 +8,7 @@ clc;
 global debug_mode path_points path_orientation map_information file_path occupancy_matrix fixed_sample_rate max_velocity limit_velocity 
 global energy_budget map_velocity orientation_people initialPoint_People
 
-debug_mode = true;
+debug_mode = false;
 create_map
 
 [sampled_path, checkpoints] = path_planning(path_points, path_orientation,"velocity");
@@ -198,19 +198,7 @@ while ~fin
         
         % alteração com a branco e a r
         if flag_Inerent_collision
-%             if counter_col == 0
-%                 turn_now = true;
-%             else
-%                 turn_now = false;
-%             end
-%             counter_col = counter_col + 1;
-%             if counter_col == 10
-%                 counter_col = 0;
-%             end
             disp("/_\ Inerent colision!")
-%         else
-%             turn_now = false;
-%             counter_col = 0;
         end
         if length(xt) - wait_time < 2/fixed_sample_rate
             end_stop = length(xt)-wait_time;
@@ -269,8 +257,6 @@ while ~fin
             old_Ncollision = colision;   
         end
         
-
-%         vel_max = 5.6;
         % Controller of the Car
         theta_safe = TrackPredict(thetat, fixed_sample_rate, wait_time);
         [w_phi, v] = simple_controler_with_v(point(1)-x_new, point(2)-y_new,...
@@ -324,6 +310,8 @@ while ~fin
         theta_old = theta_aux;
         v_old = v_aux;
         % Save current GPS Position
+        vp(t+1) = v;
+        wsp(t+1) = w_phi;
         xp(t+1) = x;
         yp(t+1) = y;
         % save Estimation of Car Position
@@ -367,7 +355,7 @@ while ~fin
 %             disp('Car is unable to follow this path');
 %             break;
 %         end
-        %start_v = 0;
+        start_v = 0;
         if( norm([x-xt(end),y-yt(end)]) < 1)
             fin = 1;
         end
@@ -449,6 +437,19 @@ figure('WindowStyle', 'docked');
 plot(dist_to_p);
 title('Error of Path','FontSize',14,'FontName','Arial');
 ylabel('Error','FontSize',12,'FontName','Arial');
+xlabel('iterations','FontSize',12,'FontName','Arial');
+
+%velocity plot
+figure('WindowStyle', 'docked');
+subplot(2,1,1);
+plot(vp);
+title('Evolution of car velocity','FontSize',14,'FontName','Arial');
+ylabel('Velocity [m/s]','FontSize',12,'FontName','Arial');
+xlabel('iterations','FontSize',12,'FontName','Arial');
+subplot(2,1,2);
+plot(wsp);
+title('Evolution of car wheel turning velocity','FontSize',14,'FontName','Arial');
+ylabel('Wheel turning speed [rad/s]','FontSize',12,'FontName','Arial');
 xlabel('iterations','FontSize',12,'FontName','Arial');
 
 %%
