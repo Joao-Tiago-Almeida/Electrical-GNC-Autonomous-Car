@@ -56,7 +56,6 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         plot(run_points(:, 1)*meters_from_MAP, run_points(:, 2)*meters_from_MAP, 'r--');
         plot(smoothed_path(:,1)*meters_from_MAP, smoothed_path(:,2)*meters_from_MAP, 'b')
         plot(sampled_path(:,1)*meters_from_MAP, sampled_path(:,2)*meters_from_MAP, 'k')
-        %place_car(sampled_path*meters_from_MAP,0.01, 1);
         legend(["Cluster " + unique(cluster)',...
             'Dijsktra Path',...
             'Smoothed Path',...
@@ -67,7 +66,6 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         % plot the final path in the original map
         
         MAP = openfig(string(file_path+"MAP.fig"));
-        %load(string(file_path+"MAP.mat"),'MAP');
         MAP.Name = 'Path Smoothing Velocity';
         plot(checkpoints(:,1),checkpoints(:,2),"wd","LineWidth",3)
         hold on
@@ -81,22 +79,7 @@ function sampled_path = path_smoothing(run_points,checkpoints,meters_from_MAP)
         Image = getframe(gcf);
         imwrite(Image.cdata, string(file_path+"bspline_path.png"), 'png');
         
-        %%%ALGORITMO DO STOR
-%         npt = length(run_points(:, 1));        % number of via points, including initial and final
-%         x = run_points(:, 1);
-%         y = run_points(:, 2);
-%         nvia = [0:1:npt-1];
-%         csinterp_x = csapi(nvia,x);
-%         csinterp_y = csapi(nvia,y);
-%         h = 0.01;
-%         time = [0:h:npt-1];
-%         xx = fnval(csinterp_x, time);
-%         yy = fnval(csinterp_y, time);
-%         plot(xx,yy)
-        
-        %legend('CheckPoints', 'Our Smoothed Path', 'Matlab Cubic Splines');
     end
-    %place_car(sampled_path,1);
     
 end
 
