@@ -1,5 +1,5 @@
 function [b_stp, min_dist, valid] = FindStep(xt, yt, thetat, error)
-% This function finds the best stp for simulation. 
+% This function finds the best stp for simulation by simulating the whole process. 
 % The arguments it expects are:
 % xt - the vector with the x coordinates of the path
 % yt - the vector with the y coordinates of the path

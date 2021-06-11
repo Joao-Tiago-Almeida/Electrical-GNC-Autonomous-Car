@@ -1,4 +1,4 @@
-function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, vel_max, wet, stop, cwalk, person, end_stop)
+function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, theta_safe, vel_max, wet, stop, sldown, person, end_stop)
 %     global err_w count_w fixed_sample_rate
     if ~exist('wet','var')
         wet = false;
@@ -7,7 +7,7 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
         stop = false;
     end
     if ~exist('cwalk','var')
-        cwalk = false;
+        sldown = false;
     end
     if ~exist('person','var')
         person = false;
@@ -53,7 +53,7 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     if stop || person
         v = 0;
     %check for crosswalks
-    elseif cwalk
+    elseif sldown
         v = 1;
     %check if there is a curve
     elseif abs(theta_safe) < 1e-1 && abs(phi_id) < 1e-2
