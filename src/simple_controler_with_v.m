@@ -56,15 +56,15 @@ function [ws, v] = simple_controler_with_v(dx, dy, theta, phi, v, dtheta_in, the
     elseif cwalk
         v = 1;
     %check if there is a curve
-    elseif abs(theta_safe) < 1e-1 && phi_id < 1e-2
+    elseif abs(theta_safe) < 1e-1 && abs(phi_id) < 1e-2
         if dx > 1e-6
             v = 10*dx/cos(theta_id);
         else
             v = 10*dy/sin(theta_id);
         end
-    elseif abs(theta_safe) < 0.15 && phi_id < 0.1
+    elseif abs(theta_safe) < 0.15 && abs(phi_id) < 0.1
         v = 3;
-    elseif abs(theta_safe) < 0.2 && phi_id < 0.2
+    elseif abs(theta_safe) < 0.2 && abs(phi_id) < 0.2
         v = 2;
     else
         v = 1;

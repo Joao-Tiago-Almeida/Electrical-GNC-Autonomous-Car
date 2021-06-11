@@ -61,7 +61,7 @@ function create_map
             end
         end
         
-        prompt = {'Type the Energy Budget for the Car Travel [J]:', 'Type the Maximum velocity for this map [km/h]:', 'Type the Threshold to be consider as colisionh [m]:' };
+        prompt = {'Type the Energy Budget for the Car Travel [J]:', 'Type the Maximum velocity for this map [km/h]:', 'Type the Threshold to be consider as colision [m]:' };
         final_params = string(inputdlg(prompt,'Parameters',[1 50], {'5e6','20','0.1'}));
         final_params = str2double(final_params);
         energy_budget = final_params(1);
