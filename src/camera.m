@@ -25,7 +25,7 @@ y_camera = [range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y ra
            range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y range_11_y ...
            range_11_y ];
 
-figure();
-plot(x_camera,y_camera,'g+');
+% figure();
+% plot(x_camera,y_camera,'g+');
 
 end
